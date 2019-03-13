@@ -1,0 +1,7 @@
+testowy plik
+liczymy linie
+w kodzie
+//
+--
+999     10
+op ui  ty lk nl
