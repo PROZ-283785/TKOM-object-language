@@ -2,10 +2,10 @@
 Int
 Object
 character constants: "asdf", 'asdf'
-list: [] appending elements in list +=
 
 arithmetic operators: + - * /  
 logical operators: < > <= >= == != || && ! 
+list: [] appending elements in list +=
 one-line comment: --
 
 in>> <statement>
@@ -36,7 +36,7 @@ object Name(Base_Name){
 	
 	}
 	
-	--calling default constructor for base object
+	--calling default constructor
 	fun Name(attrs..){
 	
 	}
