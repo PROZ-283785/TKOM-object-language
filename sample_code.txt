@@ -25,8 +25,13 @@ loop(start; end; step){
 
 }
 
+loop(identifier:list_name){
+
+}
+
 object Name{
-	atr1 := Int/Object/[]/None;
+	shared atr = Int/Object/[]/None
+	atr1 = Int/Object/[]/None;
 }
 
 (optional)
@@ -52,18 +57,18 @@ fun name(attrs,...){
 
 object Point {
 -- object fields always private
-	x := -1;
-	y := 2;
-	z := None;
+	x = -1;
+	y = 2;
+	z = None;
 	
 -- there is no default contructor
 	fun Point(){
-		this.z := 5;
+		this.z = 5;
 	}
 	
 	fun Point(x, y){
-		this.x := x;
-		this.y := y;
+		this.x = x;
+		this.y = y;
 	}
 	
 	fun getX(){
@@ -75,7 +80,7 @@ object Point {
 	}
 	
 	fun setY(value){
-		this.y := value;
+		this.y = value;
 	}
 	
 	operator < (lhs, rhs){
@@ -116,17 +121,17 @@ fun fibonnaci(n){
 
 fun main(){
 	-- object must be declared before function which is using it
-	point := Point(1, 2);
-	point2 := Point(2, 3);
-	lower := point < point2;
-	equal := point == point2;
+	point = Point(1, 2);
+	point2 = Point(2, 3);
+	lower = point < point2;
+	equal = point == point2;
 	out<<equal;
 	out<<lower;
 	
-	points := [];
+	points = [];
 	points += Point(1, 2);
 	points += Point(3, 4);
-	loop(i := 1; i := 5; i := i + 1){
+	loop(i = 1; i = 5; i = i + 1){
 		points += Point(i, i);
 	}
 	
@@ -139,28 +144,28 @@ fun main(){
 
 
 object Vehicle{
-	tires := None;
+	tires = None;
 	
 	fun Vehicle(){
 	
 	}
 
 	fun Vehicle(amount_of_tires){
-		this.tires := amount_of_tires;
+		this.tires = amount_of_tires;
 	}
 
 }
 
 --inheritance
 object Car(Vehicle){
-	max_speed := 100;
+	max_speed = 100;
 
 	fun Car(){
 	
 	}
 	
 	fun Car(speed, amount_of_tires):Vehicle(amount_of_tires){
-		max_speed := speed;
+		max_speed = speed;
 	}
 	
 
