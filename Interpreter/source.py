@@ -15,16 +15,14 @@ class Source:
         self.column = 0
         self.data_position = 0
         self.data = None
-        self.last_symbol = None
+        self.last_symbol = ''
 
     def set_data(self, data):
         self.data = data
-        print(type(data))
+        # print(type(data))
 
-    def next_symbol(self):
-        self.data.seek(self.data_position)
+    def next_symbol(self) -> str:
         symbol = self.data.read(1)
-        self.last_symbol = symbol
         self.data_position += 1
 
         if symbol == '':
@@ -32,11 +30,13 @@ class Source:
         elif ord(symbol) == 13:
             self.line += 1
             self.column = 0
+            # read second char ( windows end line)
+            self.data.read(1)
             symbol = 'EOT'
-            self.data_position += 1
         else:
             self.column += 1
-
+        self.last_symbol = symbol
+        # print(symbol)
         return symbol
 
     def get_last_symbol(self):

@@ -1,5 +1,18 @@
-abc
-def
-ghi
----
-+++
+abc123 polska
+de{f # to jest komentarz o usuniecia
+ghi # tu tez
+12}3ads
+3;4.5
+{
+}
+.;,
+
+
+object Car(Vehicle){
+    maxSpeed {get; set;} : 10;
+    age : 100;
+}
+fun changeSpeed(newSpeed){
+    maxSpeed : newSpeed;
+}
+

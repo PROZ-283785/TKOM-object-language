@@ -2,7 +2,7 @@
 Int
 Object
 character constants: "asdf", 'asdf'
-list: [] appending elements in list +=
+list: [], list.append(), list.remove(index), list[index]
 
 arithmetic operators: + - * /  
 logical operators: < > <= >= == != || && ! 
@@ -11,7 +11,7 @@ one-line comment: --
 in>> <statement>
 out<< <statement>
 
-when <statement> { 
+when <statement> {
 
 }
 else when <statement> {
@@ -30,25 +30,24 @@ loop(identifier:list_name){
 }
 
 object Name{
-	shared atr = Int/Object/[]/None
-	atr1 = Int/Object/[]/None;
+	atr1 {get; set;} = Int/Object/[]/None;
 }
 
 (optional)
 object Name(Base_Name){
 
-	fun Name(attrs..):Base_Name(attrs..){
+	fun Name(args..):Base_Name(args..){
 	
 	}
 	
 	--calling default constructor for base object
-	fun Name(attrs..){
+	fun Name(args..){
 	
 	}
 }
 
 
-fun name(attrs,...){
+fun name(args,...){
 	(optional)return;
 }
 
@@ -57,66 +56,56 @@ fun name(attrs,...){
 
 object Point {
 -- object fields always private
-	x = -1;
-	y = 2;
+	x {get; set;} = -1;
+	y {get; set;} = 2;
 	z = None;
 	
 -- there is no default contructor
 	fun Point(){
-		this.z = 5;
+		z = 5;
 	}
 	
 	fun Point(x, y){
 		this.x = x;
 		this.y = y;
 	}
-	
-	fun getX(){
-		return this.x;
-	}
-	
-	fun getY(){
-		return this.y;
-	}
-	
-	fun setY(value){
-		this.y = value;
-	}
-	
-	operator < (lhs, rhs){
-		when lhs.getX() < rhs.getX() {
-			return 1;
+
+	operator < (lhs, rhs, result OUT){
+		when lhs.x < rhs.x {
+			result = 1;
 		}
 		else {
-			return 0;
+			result = 0;
 		}
 		
 		
 	} 
 	
-	operator == (lhs, rhs){
+	operator == (lhs, rhs, result OUT){
 		when lhs.getX() == rhs.getX() && lhs.getY() == rhs.getY() {
-			return 1;
+			result = 1;
 		} 
 		else {
-			return 0;
+			result = 0;
 		}
 		
 		
 	}
--- you need to implement this method if you want to print object info
-	fun _str_(){
-		return this.x 
-	}
+
 }
 
-fun fibonnaci(n){
+fun _str_(text OUT) extends Point{
+		text = x + y;
+	}
+
+
+fun fibonacci(n IN OUT){
 
 	when (n == 1 || n == 0){
-		return 1;
+		n = 1;
 	}
 	
-	return fibonnaci(n-1) + fibonnaci(n-2);
+	n = fibonacci(n-1) + fibonacci(n-2);
 }
 
 fun main(){
