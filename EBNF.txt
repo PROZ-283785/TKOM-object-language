@@ -1,0 +1,125 @@
+program = { obiekt | funkcja | komentarz }, funkcja_startowa, { komentarz };
+
+obiekt = słowo_kluczowe_object, identyfikator, [ lewy_nawias, identyfikator,
+    prawy_nawias ], lewy_nawias_klamrowy,{ atrybut, średnik }, { { funkcja } 
+    | { przeciążanie_operatora } }, prawy_nawias_klamrowy;
+
+funkcja = słowo_kluczowe_fun, wywołanie_metody, [ dwukropek, wywołanie_metody |
+    słowo_kluczowe_extends, identyfikator ] lewy_nawias_klamrowy,
+	{ wyrażenie }, prawy_nawias_klamrowy;
+
+funkcja_startowa = słowo_kluczowe_fun, słowo_kluczowe_main, lewy_nawias, 
+    [ lista_argumentów ], prawy_nawias, ciało_funkcji;
+
+atrybut = identyfikator, [ lewy_nawias_klamrowy, { identyfikator, średnik },
+    prawy_nawias_klamrowy ], operator_przypisania, ( int | stała_znakowa | 
+    słowo_kluczowe_none | operator_indeksu | wywołanie );
+
+przeciążanie_operatora = słowo_kluczowe_operator, operator, lewy_nawias, 
+    [ lista_argumentów ], prawy_nawias, ciało_funkcji;
+
+wywołanie = wywołanie_metody | wywołanie_metody_jako_składowej;
+wywołanie_metody_jako_składowej = identyfikator, kropka, wywołanie_metody;
+wywołanie_metody = identyfikator, lewy_nawias, [ lista_argumentów ], prawy_nawias;   
+
+instrukcja_warunkowa = słowo_kluczowe_when, warunek, ciało_funkcji, 
+    [ słowo_kluczowe_else, [ słowo_kluczowe_when, warunek ], ciało_funkcji ];
+
+pętla = słowo_kluczowe_loop, lewy_nawias, ( przypisanie, średnik, warunek, 
+    średnik, krok | identyfikator, dwukropek, identyfikator ), 
+    prawy_nawias, ciało_funkcji;
+
+ciało_funkcji =  lewy_nawias_klamrowy, { wyrażenie }, prawy_nawias_klamrowy;
+
+wyrażenie = ( przypisanie, średnik ) | ( wywołanie, średnik ) | 
+    instrukcja_warunkowa | pętla | komentarz | ( obsługa_wejścia_wyjścia, średnik ); 
+
+przypisanie = [ słowo_kluczowe_this ], identyfikator, operator_przypisania, 
+    ( stała_znakowa | int | słowo_kluczowe_none | operator_indeksu | 
+    wyrażenie_arytmetyczne | wywołanie_metody );
+
+
+(*
+Warunek pierwszeństwo:
+1. operator_negacji
+2. operator_relacyjny
+3. operator_logiczny
+*)
+
+warunek = składowa_warunku, { operator_logiczny, składowa_warunku };
+składowa_warunku = czynnik, { operator_relacyjny, czynnik };
+czynnik = int | identyfikator | stała_znakowa | [ operator_negacji ], 
+    lewy_nawias, warunek, prawy_nawias | wyrażenie_arytmetyczne;
+
+
+obsługa_wejścia_wyjścia = obsługa_wejścia | obsługa_wyjścia;
+obsługa_wejścia = "in>>", identyfikator, średnik;
+obługa_wyjścia = "out<<", ( identyfikator | stała_znakowa ), średnik;
+
+krok = identyfikator, operator_przypisania, ( wyrażenie_arytmetyczne | wywołanie )
+
+wyrażenie_arytmetyczne = składowa, {operator_dodawania, składowa};
+składowa = element, {operator_mnożenia, element};
+element = int |  identyfikator | lewy_nawias, wyrażenie_arytmetyczne, prawy_nawias;
+
+(*
+Wyrażenie_arytmetyczne pierwszeństwo:
+1. operator_mnożenia
+2. operator_dodawania
+*)
+
+identyfikator = [:alpha:], [:word:]*;
+
+lista_argumentów = { argument_z_przecinkiem }, argument;
+argument = identyfikator, [ słowo_kluczowe_in ], [ słowo_kluczowe_out ];
+argument_z_przecinkiem = argument, ",";
+
+operator = operator_matematyczny | operator_logiczny | operator_przypisania |
+    operator_negacji | operator_relacyjny;
+
+operator_przypisania = "=";
+operator_negacji = "!";
+operator_relacyjny = "<=" | ">=" | "==" | "!=" | "<" | ">";
+operator_logiczny = "||" | "&&"; 
+operator_matematyczny = operator_dodawania | operator_mnożenia;
+operator_dodawania = "+" | "-";
+operator_mnożenia = "*" | "/";
+operator_indeksu = "[]";
+
+słowo_kluczowe_else = "else";
+słowo_kluczowe_when = "when";
+słowo_kluczowe_loop = "loop";
+słowo_kluczowe_object = "object";
+słowo_kluczowe_fun = "fun";
+słowo_kluczowe_operator = "operator";
+słowo_kluczowe_main = "main";
+słowo_kluczowe_none = "none";
+słowo_kluczowe_extends = "extends";
+słowo_kluczowe_in = "in";
+słowo_kluczowe_out = "out";
+słowo_kluczowe_this = "this";
+
+dwukropek = ":";
+średnik = ";";
+kropka = "."
+lewy_nawias = "(";
+prawy_nawias = ")";
+lewy_nawias_klamrowy= "{";
+prawy_nawias_klamrowy = "}";
+
+int  = "0" | ([ "-" ], cyfra_bez_zera, { cyfra });
+stała_znakowa = ( "\"", ciag_znakow, "\"") |  ("\'", ciag_znakow, "\'" );
+
+komentarz = "#", ciag_znakow;
+
+cyfra_bez_zera = "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9";
+cyfra = [:digit:];
+
+ciag_znakow = [:alnum:]* | [:punct:]* | [:blank:]*;
+
+[:alnum:] = [a-zA-Z0-9];
+[:alpha:] = [a-zA-Z];
+[:digit:] = [0-9];
+[:word:] = [a-zA-Z0-9];
+[:punct:] = [ ! " # $ % & ' ( ) * + , - . / : ; < = > ? @ [ \ ] ^ _ ` { | } ~ ];
+[:blank:] = space or tab;

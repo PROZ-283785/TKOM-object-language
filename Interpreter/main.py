@@ -12,7 +12,7 @@ def main():
     lex = lexer.Lexer(src)
     for i in range(0, 100):
         token = lex.get_token()
-        print("-- {}. {} {}".format(i, token.identifier, token.token_type))
+        print(token)
         if token.token_type == tokens.TokenType.t_eof:
             break
 
