@@ -13,7 +13,6 @@ class Source:
 
         self.line = 1
         self.column = 0
-        self.data_position = 0
         self.data = None
         self.last_symbol = ''
 
@@ -22,8 +21,8 @@ class Source:
         # print(type(data))
 
     def next_symbol(self) -> str:
+
         symbol = self.data.read(1)
-        self.data_position += 1
 
         if symbol == '':
             symbol = 'EOF'

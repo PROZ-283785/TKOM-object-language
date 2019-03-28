@@ -2,7 +2,14 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="1529d305-74fb-4831-83b4-5d40279c4f1c" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/sample_code.txt" beforeDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/lexer_tests.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lexer.py" beforeDir="false" afterPath="$PROJECT_DIR$/lexer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/source.py" beforeDir="false" afterPath="$PROJECT_DIR$/source.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test1" beforeDir="false" afterPath="$PROJECT_DIR$/test1" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tokens.py" beforeDir="false" afterPath="$PROJECT_DIR$/tokens.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -14,20 +21,56 @@
     <splitter split-orientation="horizontal" split-proportion="0.5">
       <split-first>
         <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-          <file pinned="false" current-in-tab="true">
+          <file pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/main.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="255">
-                  <caret line="15" selection-start-line="15" selection-end-line="15" />
+                <state relative-caret-position="187">
+                  <caret line="11" column="3" selection-start-line="11" selection-start-column="3" selection-end-line="11" selection-end-column="3" />
+                  <folding>
+                    <element signature="e#0#13#0" expanded="true" />
+                  </folding>
                 </state>
               </provider>
             </entry>
           </file>
           <file pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/tests/lexer_tests.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="935">
+                  <caret line="55" lean-forward="true" selection-start-line="55" selection-end-line="55" />
+                  <folding>
+                    <element signature="e#0#15#0" expanded="true" />
+                  </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/test1">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="68">
-                  <caret line="4" column="3" selection-start-line="4" selection-start-column="3" selection-end-line="4" selection-end-column="3" />
+                <state relative-caret-position="289">
+                  <caret line="17" column="13" selection-start-line="17" selection-start-column="13" selection-end-line="17" selection-end-column="13" />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/lexer.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="-3149">
+                  <caret line="20" column="8" selection-start-line="20" selection-start-column="8" selection-end-line="20" selection-end-column="8" />
+                  <folding>
+                    <element signature="e#0#13#0" expanded="true" />
+                  </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/source.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="391">
+                  <caret line="23" selection-start-line="23" selection-end-line="23" />
                 </state>
               </provider>
             </entry>
@@ -37,10 +80,10 @@
       <split-second>
         <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
           <file pinned="false" current-in-tab="true">
-            <entry file="file://$PROJECT_DIR$/source.py">
+            <entry file="file://$PROJECT_DIR$/tokens.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="578">
-                  <caret line="34" column="25" selection-start-line="34" selection-start-column="25" selection-end-line="34" selection-end-column="25" />
+                <state relative-caret-position="-106">
+                  <caret line="11" column="79" selection-start-line="11" selection-start-column="79" selection-end-line="11" selection-end-column="79" />
                 </state>
               </provider>
             </entry>
@@ -59,6 +102,7 @@
   <component name="FindInProjectRecents">
     <findStrings>
       <find>char</find>
+      <find>StringIO</find>
     </findStrings>
     <replaceStrings>
       <replace>symbol</replace>
@@ -72,16 +116,20 @@
       <list>
         <option value="$PROJECT_DIR$/Source.py" />
         <option value="$PROJECT_DIR$/test.txt" />
-        <option value="$PROJECT_DIR$/test1" />
-        <option value="$PROJECT_DIR$/main.py" />
         <option value="$PROJECT_DIR$/source.py" />
+        <option value="$PROJECT_DIR$/tokens.py" />
+        <option value="$PROJECT_DIR$/tests/lexer_tests.py" />
+        <option value="$PROJECT_DIR$/lexer.py" />
+        <option value="$PROJECT_DIR$/main.py" />
+        <option value="$PROJECT_DIR$/test1" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="-10" />
-    <option name="width" value="1785" />
-    <option name="height" value="1040" />
+    <option name="x" value="-8" />
+    <option name="y" value="-8" />
+    <option name="width" value="1936" />
+    <option name="height" value="1056" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectView">
@@ -89,7 +137,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -106,14 +153,33 @@
               <item name="Interpreter" type="b2602c69:ProjectViewProjectNode" />
               <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
             </path>
+            <path>
+              <item name="Interpreter" type="b2602c69:ProjectViewProjectNode" />
+              <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
+              <item name="&lt; Python 3.7 (Interpreter) &gt;" type="70bed36:NamedLibraryElementNode" />
+            </path>
+            <path>
+              <item name="Interpreter" type="b2602c69:ProjectViewProjectNode" />
+              <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
+              <item name="&lt; Python 3.7 (Interpreter) &gt;" type="70bed36:NamedLibraryElementNode" />
+              <item name="Python37-32" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="Interpreter" type="b2602c69:ProjectViewProjectNode" />
+              <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
+              <item name="&lt; Python 3.7 (Interpreter) &gt;" type="70bed36:NamedLibraryElementNode" />
+              <item name="Lib" type="462c0819:PsiDirectoryNode" />
+            </path>
           </expand>
           <select />
         </subPane>
       </pane>
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
     <property name="last_opened_file_path" value="$PROJECT_DIR$/../../../PSZT/repo/optical-fiber-network" />
+    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
   <component name="RunDashboard">
     <option name="ruleStates">
@@ -127,7 +193,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager">
+  <component name="RunManager" selected="Python.main">
     <configuration name="main" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="Interpreter" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -149,9 +215,24 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <configuration name="Unittests for lexer_tests.LexerTest" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
+      <module name="Interpreter" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/tests" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;lexer_tests.LexerTest&quot;" />
+      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
+      <method v="2" />
+    </configuration>
     <recent_temporary>
       <list>
         <item itemvalue="Python.main" />
+        <item itemvalue="Python tests.Unittests for lexer_tests.LexerTest" />
       </list>
     </recent_temporary>
   </component>
@@ -168,6 +249,38 @@
     </task>
     <servers />
   </component>
+  <component name="TestHistory">
+    <history-entry file="Unittests_for_lexer_tests_LexerTest - 2019.03.28 at 17h 44m 52s.xml">
+      <configuration name="Unittests for lexer_tests.LexerTest" configurationId="tests" />
+    </history-entry>
+    <history-entry file="Unittests_for_lexer_tests_LexerTest - 2019.03.28 at 17h 45m 00s.xml">
+      <configuration name="Unittests for lexer_tests.LexerTest" configurationId="tests" />
+    </history-entry>
+    <history-entry file="Unittests_for_lexer_tests_LexerTest - 2019.03.28 at 17h 49m 34s.xml">
+      <configuration name="Unittests for lexer_tests.LexerTest" configurationId="tests" />
+    </history-entry>
+    <history-entry file="Unittests_for_lexer_tests_LexerTest - 2019.03.28 at 17h 49m 46s.xml">
+      <configuration name="Unittests for lexer_tests.LexerTest" configurationId="tests" />
+    </history-entry>
+    <history-entry file="Unittests_for_lexer_tests_LexerTest - 2019.03.28 at 17h 49m 51s.xml">
+      <configuration name="Unittests for lexer_tests.LexerTest" configurationId="tests" />
+    </history-entry>
+    <history-entry file="Unittests_for_lexer_tests_LexerTest - 2019.03.28 at 18h 08m 57s.xml">
+      <configuration name="Unittests for lexer_tests.LexerTest" configurationId="tests" />
+    </history-entry>
+    <history-entry file="Unittests_for_lexer_tests_LexerTest - 2019.03.28 at 18h 42m 53s.xml">
+      <configuration name="Unittests for lexer_tests.LexerTest" configurationId="tests" />
+    </history-entry>
+    <history-entry file="Unittests_for_lexer_tests_LexerTest - 2019.03.28 at 18h 47m 59s.xml">
+      <configuration name="Unittests for lexer_tests.LexerTest" configurationId="tests" />
+    </history-entry>
+    <history-entry file="Unittests_for_lexer_tests_LexerTest - 2019.03.28 at 18h 48m 31s.xml">
+      <configuration name="Unittests for lexer_tests.LexerTest" configurationId="tests" />
+    </history-entry>
+    <history-entry file="Unittests_for_lexer_tests_LexerTest - 2019.03.28 at 18h 48m 55s.xml">
+      <configuration name="Unittests for lexer_tests.LexerTest" configurationId="tests" />
+    </history-entry>
+  </component>
   <component name="ToolWindowManager">
     <frame x="-8" y="-8" width="1936" height="1056" extended-state="6" />
     <editor active="true" />
@@ -177,7 +290,7 @@
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" />
-      <window_info anchor="bottom" id="Run" order="2" weight="0.32936078" />
+      <window_info active="true" anchor="bottom" id="Run" order="2" visible="true" weight="0.32936078" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
@@ -200,31 +313,55 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/sample_code.txt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2890">
-          <caret line="170" lean-forward="true" selection-start-line="170" selection-end-line="170" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/test1">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="68">
-          <caret line="4" column="3" selection-start-line="4" selection-start-column="3" selection-end-line="4" selection-end-column="3" />
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/sample_code.txt" />
     <entry file="file://$PROJECT_DIR$/source.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="578">
-          <caret line="34" column="25" selection-start-line="34" selection-start-column="25" selection-end-line="34" selection-end-column="25" />
+        <state relative-caret-position="391">
+          <caret line="23" selection-start-line="23" selection-end-line="23" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tokens.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-106">
+          <caret line="11" column="79" selection-start-line="11" selection-start-column="79" selection-end-line="11" selection-end-column="79" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/lexer.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-3149">
+          <caret line="20" column="8" selection-start-line="20" selection-start-column="8" selection-end-line="20" selection-end-column="8" />
+          <folding>
+            <element signature="e#0#13#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tests/lexer_tests.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="935">
+          <caret line="55" lean-forward="true" selection-start-line="55" selection-end-line="55" />
+          <folding>
+            <element signature="e#0#15#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/main.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="255">
-          <caret line="15" selection-start-line="15" selection-end-line="15" />
+        <state relative-caret-position="187">
+          <caret line="11" column="3" selection-start-line="11" selection-start-column="3" selection-end-line="11" selection-end-column="3" />
+          <folding>
+            <element signature="e#0#13#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/test1">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="289">
+          <caret line="17" column="13" selection-start-line="17" selection-start-column="13" selection-end-line="17" selection-end-column="13" />
         </state>
       </provider>
     </entry>

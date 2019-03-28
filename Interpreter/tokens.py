@@ -2,14 +2,14 @@ import enum
 
 
 class Token:
-    def __init__(self, identifier, value, line, column):
-        self.identifier = identifier
-        self.token_type = TokenType(value)
+    def __init__(self, value, identifier, line, column):
+        self.value = value
+        self.token_type = TokenType(identifier)
         self.line = line
         self.column = column
 
     def __str__(self):
-        return "{}:{} {} {}".format(self.line, self.column, self.identifier, self.token_type)
+        return "{}:{} {} {} {}".format(self.line, self.column, self.value, type(self.value), self.token_type)
 
     def __repr__(self):
         return self.__str__()
@@ -24,8 +24,6 @@ class TokenType(enum.Enum):
     t_when = 'when'
     t_else = 'else'
     t_loop = 'loop'
-    t_object = 'object'
-    t_fun = 'fun'
     t_operator = 'operator'
     t_main = 'main'
     t_identifier = 'identifier'
@@ -66,3 +64,5 @@ class TokenType(enum.Enum):
     t_division = '/'
     t_multiplication = '*'
     t_difference = '-'
+    t_get = 'get'
+    t_set = 'set'

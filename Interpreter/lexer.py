@@ -1,77 +1,75 @@
 import tokens
 from string import ascii_letters, digits, whitespace
-import copy
 
 
 class Lexer:
-    key_values = ['when', 'else', 'loop', 'object', 'fun', 'operator', 'main', 'int', 'in', 'out', 'extends', 'none']
+    """
+        Pytania: co powinien zrobić lexer gdy dostanie nieznany token, za długi identyfikator?
+    """
+    key_values = ['when', 'else', 'loop', 'operator', 'main', 'int', 'in', 'out', 'extends', 'none', 'get', 'set']
 
     def __init__(self, source):
         self.source = source
         self.function_map = self.create_dict()
-        self.string = ''
+        self.value = None
 
     def get_token(self):
 
-        self.string = ''
+        self.value = ''
         last_char = self.source.last_symbol
-        if not self.is_white_character(last_char):
-            symbol = last_char
-        else:
+
+        if self.is_white_character(last_char):
             symbol = self.source.next_symbol()
+        else:
+            symbol = last_char
+
         while self.is_white_character(symbol) or symbol == tokens.TokenType.t_comment.value:
             if symbol == 'EOF':
                 line, column = self.source.line, self.source.column
-                return tokens.Token(identifier=copy.copy(self.string), value=tokens.TokenType.t_eof, line=line, column=column)
+                return tokens.Token(value=self.value, identifier=tokens.TokenType.t_eof, line=line, column=column)
             if symbol == tokens.TokenType.t_comment.value:
                 self.escape_comment()
             symbol = self.source.next_symbol()
 
         line, column = self.source.line, self.source.column
-        self.string += symbol
+        self.value += symbol
         token_type = self.function_map[symbol]()
-        token = tokens.Token(identifier=copy.copy(self.string), value=token_type, line=line, column=column)
+        token = tokens.Token(value=self.value, identifier=token_type, line=line, column=column)
 
         return token
 
     def find_identifier(self):
         symbol = self.source.next_symbol()
         while self.is_letter(symbol) or self.is_number(symbol):
-            self.string += symbol
+            self.value += symbol
             symbol = self.source.next_symbol()
-        if self.string in self.key_values:
-            return self.key_val_token(self.string)
+            if len(self.value) > 30:
+                raise NameError("Identifier cannot have more than 30 characters!")
+        if self.value in self.key_values:
+            return self.key_val_token(self.value)
 
         return tokens.TokenType.t_identifier
 
     def find_int(self):
+        integer = (ord(self.source.get_last_symbol()) - 48)
         symbol = self.source.next_symbol()
         while self.is_number(symbol):
-            self.string += symbol
+            integer = integer * 10 + ord(symbol) - 48
             symbol = self.source.next_symbol()
-
+        self.value = integer
         return tokens.TokenType.t_integer
 
     @staticmethod
     def is_white_character(symbol):
-        if symbol in whitespace or symbol == 'EOF' or symbol == 'EOT':
-            return True
-        else:
-            return False
+        return symbol in whitespace or symbol == 'EOF' or symbol == 'EOT'
 
     @staticmethod
     def is_letter(symbol):
-        if symbol in ascii_letters:
-            return True
-        else:
-            return False
+        return symbol in ascii_letters
 
     @staticmethod
     def is_number(symbol):
-        if symbol in digits:
-            return True
-        else:
-            return False
+        return symbol in digits
 
     @staticmethod
     def key_val_token(string):
@@ -120,7 +118,7 @@ class Lexer:
         symbol = self.source.next_symbol()
 
         if symbol == '=':
-            self.string += symbol
+            self.value += symbol
             self.source.next_symbol()
             return tokens.TokenType.t_comparison
         else:
@@ -130,7 +128,7 @@ class Lexer:
         symbol = self.source.next_symbol()
 
         if symbol == '&':
-            self.string += symbol
+            self.value += symbol
             self.source.next_symbol()
             return tokens.TokenType.t_logical_and
         else:
@@ -140,7 +138,7 @@ class Lexer:
         symbol = self.source.next_symbol()
 
         if symbol == '|':
-            self.string += symbol
+            self.value += symbol
             self.source.next_symbol()
             return tokens.TokenType.t_logical_or
         else:
@@ -150,7 +148,7 @@ class Lexer:
         symbol = self.source.next_symbol()
 
         if symbol == '=':
-            self.string += symbol
+            self.value += symbol
             self.source.next_symbol()
             return tokens.TokenType.t_inequality
         else:
@@ -160,11 +158,11 @@ class Lexer:
         symbol = self.source.next_symbol()
 
         if symbol == '=':
-            self.string += symbol
+            self.value += symbol
             self.source.next_symbol()
             return tokens.TokenType.t_loe
         elif symbol == '<':
-            self.string += symbol
+            self.value += symbol
             self.source.next_symbol()
             return tokens.TokenType.t_output
         else:
@@ -174,11 +172,11 @@ class Lexer:
         symbol = self.source.next_symbol()
 
         if symbol == '=':
-            self.string += symbol
+            self.value += symbol
             self.source.next_symbol()
             return tokens.TokenType.t_goe
         elif symbol == '>':
-            self.string += symbol
+            self.value += symbol
             self.source.next_symbol()
             return tokens.TokenType.t_input
         else:
@@ -200,7 +198,7 @@ class Lexer:
         symbol = self.source.next_symbol()
 
         if symbol in digits:
-            self.string += symbol
+            self.value += symbol
             self.find_int()
             return
         else:
