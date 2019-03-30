@@ -4,14 +4,15 @@ from string import ascii_letters, digits, whitespace
 
 class Lexer:
     """
-        Pytania: co powinien zrobić lexer gdy dostanie nieznany token, za długi identyfikator?
+        Pytania: co powinien zrobić lexer gdy dostanie nieznany token
+        co zrobić z 123asd
     """
-    key_values = ['when', 'else', 'loop', 'operator', 'main', 'int', 'in', 'out', 'extends', 'none', 'get', 'set']
 
     def __init__(self, source):
         self.source = source
         self.function_map = self.create_dict()
         self.value = None
+        self.token = tokens.Token(None, 'unknown', None, None, None)
 
     def get_token(self):
 
@@ -26,28 +27,29 @@ class Lexer:
         while self.is_white_character(symbol) or symbol == tokens.TokenType.t_comment.value:
             if symbol == 'EOF':
                 line, column = self.source.line, self.source.column
-                return tokens.Token(value=self.value, identifier=tokens.TokenType.t_eof, line=line, column=column)
+                return tokens.Token(value=self.value, identifier=tokens.TokenType.t_eof, line=line, column=column, pos_in_file=None)
             if symbol == tokens.TokenType.t_comment.value:
                 self.escape_comment()
             symbol = self.source.next_symbol()
 
-        line, column = self.source.line, self.source.column
+        self.token.line, self.token.column, self.token.position_in_file = self.source.line, self.source.column, self.source.data_position - 1
         self.value += symbol
         token_type = self.function_map[symbol]()
-        token = tokens.Token(value=self.value, identifier=token_type, line=line, column=column)
+        self.token.value = self.value
+        self.token.token_type = token_type
 
-        return token
+        return self.token
 
-    def find_identifier(self):
+    def find_identifier_or_keyword(self):
         symbol = self.source.next_symbol()
         while self.is_letter(symbol) or self.is_number(symbol):
             self.value += symbol
             symbol = self.source.next_symbol()
             if len(self.value) > 30:
-                raise NameError("Identifier cannot have more than 30 characters!")
-        if self.value in self.key_values:
-            return self.key_val_token(self.value)
-
+                wrong_data = self.source.get_data_range(self.token.position_in_file, 40)
+                raise NameError(f"Error in line:{self.token.line} column:{self.token.column} {wrong_data} -> Identifier cannot have more than 30 characters!")
+        if self.value in self.function_map.keys():
+            return self.function_map[self.value]()
         return tokens.TokenType.t_identifier
 
     def find_int(self):
@@ -194,6 +196,46 @@ class Lexer:
         self.source.next_symbol()
         return tokens.TokenType.t_division
 
+    def when_keyword_token(self):
+        self.source.next_symbol()
+        return tokens.TokenType.t_when
+
+    def else_keyword_token(self):
+        self.source.next_symbol()
+        return tokens.TokenType.t_else
+
+    def loop_keyword_token(self):
+        self.source.next_symbol()
+        return tokens.TokenType.t_loop
+
+    def operator_keyword_token(self):
+        self.source.next_symbol()
+        return tokens.TokenType.t_operator
+
+    def in_keyword_token(self):
+        self.source.next_symbol()
+        return tokens.TokenType.t_in
+
+    def out_keyword_token(self):
+        self.source.next_symbol()
+        return tokens.TokenType.t_out
+
+    def extends_keyword_token(self):
+        self.source.next_symbol()
+        return tokens.TokenType.t_extends
+
+    def none_keyword_token(self):
+        self.source.next_symbol()
+        return tokens.TokenType.t_none
+
+    def get_keyword_token(self):
+        self.source.next_symbol()
+        return tokens.TokenType.t_get
+
+    def set_keyword_token(self):
+        self.source.next_symbol()
+        return tokens.TokenType.t_set
+
     def check_if_number_or_difference_token(self):
         symbol = self.source.next_symbol()
 
@@ -207,7 +249,7 @@ class Lexer:
     def create_dict(self):
 
         d = dict()
-        d.update(d.fromkeys(ascii_letters, self.find_identifier))
+        d.update(d.fromkeys(ascii_letters, self.find_identifier_or_keyword))
         d.update(d.fromkeys(digits, self.find_int))
         d['.'] = self.dot_token
         d[','] = self.comma_token
@@ -227,6 +269,14 @@ class Lexer:
         d['*'] = self.multiplication_token
         d['-'] = self.check_if_number_or_difference_token
         d['/'] = self.division_token
-
+        d['when'] = self.when_keyword_token
+        d['else'] = self.else_keyword_token
+        d['loop'] = self.loop_keyword_token
+        d['operator'] = self.operator_keyword_token
+        d['out'] = self.out_keyword_token
+        d['extends'] = self.extends_keyword_token
+        d['none'] = self.none_keyword_token
+        d['get'] = self.get_keyword_token
+        d['set'] = self.set_keyword_token
         return d
 
