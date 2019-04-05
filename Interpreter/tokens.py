@@ -16,12 +16,8 @@ class Token:
         return self.__str__()
 
 
-class NoValue(enum.Enum):
-    def __repr__(self):
-        return '<%s.%s>' % (self.__class__.__name__, self.name)
-
-
 class TokenType(enum.Enum):
+    t_this = 'this'
     t_when = 'when'
     t_else = 'else'
     t_loop = 'loop'

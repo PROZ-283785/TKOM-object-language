@@ -5,7 +5,6 @@ from string import ascii_letters, digits, whitespace
 class Lexer:
     """
         Pytania: co powinien zrobić lexer gdy dostanie nieznany token
-        co zrobić z 123asd
     """
 
     def __init__(self, source):
@@ -25,12 +24,15 @@ class Lexer:
             symbol = last_char
 
         while self.is_white_character(symbol) or symbol == tokens.TokenType.t_comment.value:
-            if symbol == 'EOF':
-                line, column = self.source.line, self.source.column
-                return tokens.Token(value=self.value, identifier=tokens.TokenType.t_eof, line=line, column=column, pos_in_file=None)
+
             if symbol == tokens.TokenType.t_comment.value:
                 self.escape_comment()
             symbol = self.source.next_symbol()
+
+        if symbol == 'EOF':
+            line, column = self.source.line, self.source.column
+            return tokens.Token(value=self.value, identifier=tokens.TokenType.t_eof, line=line, column=column,
+                                pos_in_file=None)
 
         self.token.line, self.token.column, self.token.position_in_file = self.source.line, self.source.column, self.source.data_position - 1
         self.value += symbol
@@ -47,7 +49,9 @@ class Lexer:
             symbol = self.source.next_symbol()
             if len(self.value) > 30:
                 wrong_data = self.source.get_data_range(self.token.position_in_file, 40)
-                raise NameError(f"Error in line:{self.token.line} column:{self.token.column} {wrong_data} -> Identifier cannot have more than 30 characters!")
+                raise NameError(
+                    f"Error in line:{self.token.line} column:{self.token.column} {wrong_data} "
+                    f"-> Identifier cannot have more than 30 characters!")
         if self.value in self.function_map.keys():
             return self.function_map[self.value]()
         return tokens.TokenType.t_identifier
@@ -63,7 +67,7 @@ class Lexer:
 
     @staticmethod
     def is_white_character(symbol):
-        return symbol in whitespace or symbol == 'EOF' or symbol == 'EOT'
+        return symbol in whitespace or symbol == 'EOT'
 
     @staticmethod
     def is_letter(symbol):
@@ -236,6 +240,10 @@ class Lexer:
         self.source.next_symbol()
         return tokens.TokenType.t_set
 
+    def this_keyword_token(self):
+        self.source.next_symbol()
+        return tokens.TokenType.t_this
+
     def check_if_number_or_difference_token(self):
         symbol = self.source.next_symbol()
 
@@ -273,10 +281,11 @@ class Lexer:
         d['else'] = self.else_keyword_token
         d['loop'] = self.loop_keyword_token
         d['operator'] = self.operator_keyword_token
+        d['in'] = self.in_keyword_token
         d['out'] = self.out_keyword_token
         d['extends'] = self.extends_keyword_token
         d['none'] = self.none_keyword_token
         d['get'] = self.get_keyword_token
         d['set'] = self.set_keyword_token
+        d['this'] = self.this_keyword_token
         return d
-
