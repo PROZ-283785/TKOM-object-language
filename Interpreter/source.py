@@ -16,7 +16,7 @@ class Source(ABC):
         self.column = 0
         self.data_position = 0
         self.data = None
-        self.last_symbol = ''
+        self.last_symbol = ' '
 
     def set_data(self, data):
         self.data = data

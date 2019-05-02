@@ -3,40 +3,35 @@ from string import ascii_letters, digits, whitespace
 
 
 class Lexer:
-    """
-        Pytania: co powinien zrobić lexer gdy dostanie nieznany token
-    """
 
     def __init__(self, source):
         self.source = source
         self.function_map = self.create_dict()
+        self.keywords = self.create_keyword_list()
         self.value = None
         self.token = tokens.Token(None, 'unknown', None, None, None)
 
     def get_token(self):
 
         self.value = ''
-        last_char = self.source.last_symbol
+        symbol = self.source.last_symbol
 
-        if self.is_white_character(last_char):
+        while self.is_white_character(symbol) or self.is_comment(symbol):
             symbol = self.source.next_symbol()
-        else:
-            symbol = last_char
-
-        while self.is_white_character(symbol) or symbol == tokens.TokenType.t_comment.value:
-
-            if symbol == tokens.TokenType.t_comment.value:
-                self.escape_comment()
-            symbol = self.source.next_symbol()
-
-        if symbol == 'EOF':
-            line, column = self.source.line, self.source.column
-            return tokens.Token(value=self.value, identifier=tokens.TokenType.t_eof, line=line, column=column,
-                                pos_in_file=None)
 
         self.token.line, self.token.column, self.token.position_in_file = self.source.line, self.source.column, self.source.data_position - 1
         self.value += symbol
-        token_type = self.function_map[symbol]()
+        if symbol == 'EOF':
+            self.token.token_type = tokens.TokenType.t_eof
+            self.token.value = self.value
+            return self.token
+
+        try:
+            token_type = self.function_map[symbol]()
+        except KeyError:
+            token_type = tokens.TokenType.t_unknown
+            self.source.next_symbol()
+
         self.token.value = self.value
         self.token.token_type = token_type
 
@@ -52,8 +47,8 @@ class Lexer:
                 raise NameError(
                     f"Error in line:{self.token.line} column:{self.token.column} {wrong_data} "
                     f"-> Identifier cannot have more than 30 characters!")
-        if self.value in self.function_map.keys():
-            return self.function_map[self.value]()
+        if self.value in self.keywords:
+            return tokens.TokenType.t_key_value
         return tokens.TokenType.t_identifier
 
     def find_int(self):
@@ -64,6 +59,11 @@ class Lexer:
             symbol = self.source.next_symbol()
         self.value = integer
         return tokens.TokenType.t_integer
+
+    def is_comment(self, symbol):
+        if symbol == tokens.TokenType.t_comment.value:
+            self.escape_comment()
+            return True
 
     @staticmethod
     def is_white_character(symbol):
@@ -254,6 +254,16 @@ class Lexer:
         else:
             return tokens.TokenType.t_difference
 
+    def character_constant_token(self):
+        symbol = self.source.next_symbol()
+        self.value = ''
+        while symbol != '\'':
+            self.value += symbol
+            symbol = self.source.next_symbol()
+        self.source.next_symbol()
+
+        return tokens.TokenType.t_character_constant
+
     def create_dict(self):
 
         d = dict()
@@ -277,15 +287,10 @@ class Lexer:
         d['*'] = self.multiplication_token
         d['-'] = self.check_if_number_or_difference_token
         d['/'] = self.division_token
-        d['when'] = self.when_keyword_token
-        d['else'] = self.else_keyword_token
-        d['loop'] = self.loop_keyword_token
-        d['operator'] = self.operator_keyword_token
-        d['in'] = self.in_keyword_token
-        d['out'] = self.out_keyword_token
-        d['extends'] = self.extends_keyword_token
-        d['none'] = self.none_keyword_token
-        d['get'] = self.get_keyword_token
-        d['set'] = self.set_keyword_token
-        d['this'] = self.this_keyword_token
+        d['\''] = self.character_constant_token
+
         return d
+
+    @staticmethod
+    def create_keyword_list():
+        return ['when', 'else', 'loop', 'operator', 'in', 'out', 'extends', 'none', 'get', 'set', 'this']

@@ -17,17 +17,9 @@ class Token:
 
 
 class TokenType(enum.Enum):
-    t_this = 'this'
-    t_when = 'when'
-    t_else = 'else'
-    t_loop = 'loop'
-    t_operator = 'operator'
+
     t_identifier = 'identifier'
     t_integer = 'int'
-    t_in = 'in'
-    t_out = 'out'
-    t_extends = 'extends'
-    t_none = 'none'
     t_character_constant = 'char_const'
     t_negation = '!'
     t_logical_and = '&&'
@@ -56,5 +48,8 @@ class TokenType(enum.Enum):
     t_division = '/'
     t_multiplication = '*'
     t_difference = '-'
-    t_get = 'get'
-    t_set = 'set'
+    t_key_value = 'k_val'
+    t_index = '[]'
+
+
+t_operator = [TokenType.t_comparison, TokenType.t_assignment, TokenType.t_inequality, TokenType.t_goe, TokenType.t_loe, TokenType.t_less, TokenType.t_greater, TokenType.t_output, TokenType.t_input, TokenType.t_addition, TokenType.t_division, TokenType.t_multiplication, TokenType.t_difference]

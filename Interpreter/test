@@ -1,0 +1,23 @@
+funkcja(a in, b out, c in out, d){
+    in>>a;
+    out<<'a';
+    loop(a:b){
+        in>>a;
+    }
+
+}
+
+obiekt{
+
+    operator = (){
+
+    }
+    fun(){
+
+    }
+
+}
+
+obiekt extends obiekt1{
+
+}

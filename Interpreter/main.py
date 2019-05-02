@@ -1,3 +1,4 @@
+import pars
 import source
 import tokens
 import lexer
@@ -6,20 +7,22 @@ import lexer
 def main():
 
     src = source.StreamSource()
-    fo = open("test1", "r", encoding='utf-8', newline='\n')
+    fo = open("test", "r", encoding='utf-8', newline='\n')
     # fo = StringIO()
     # fo.write('112321312341234 tsdadfds  fasdfasdfasdfasdfasdfaasdfads fads \n')
     # fo.seek(0)
     # src = source.StringSource()
     # fo = "in \nin \0"
     src.set_data(fo)
-    print(src.get_data_range(5, 2))
     lex = lexer.Lexer(src)
-    token = lex.get_token()
-    print(token)
-    while token.token_type != tokens.TokenType.t_eof:
-        token = lex.get_token()
-        print(token)
+    parser = pars.Parser(lex)
+    print(parser.parse())
+
+    # token = lex.get_token()
+    # print(token)
+    # while token.token_type != tokens.TokenType.t_eof:
+    #     token = lex.get_token()
+    #     print(token)
 
 
 def test():

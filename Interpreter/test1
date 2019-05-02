@@ -1,8 +1,11 @@
+x = 'text';
+
+#comment
 Car extends Vehicle{
     maxSpeed {get; set;} = 10;
     age = 100;
 }
-
+#comment
 
 changeSpeed(newSpeed) extends Car{
     maxSpeed.() == newSpeed;
@@ -17,7 +20,7 @@ main(){
     wynik = none;
     kwadrat(5, wynik);
     out >> wynik;
-
+    x = 'asdfdasf';
 }
 
 #comment
