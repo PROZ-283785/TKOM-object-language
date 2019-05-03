@@ -1,7 +1,21 @@
 funkcja(a in, b out, c in out, d){
-    in>>a;
-    out<<'a';
+
+    loop( i = 1; i < 5; i = i + 1){
+
+    }
+
+    a = fun() + fun() + fun() + a + 2 + a.b;
+    a = car.run();
     loop(a:b){
+        in>>a;
+    }
+    out<< a + b + c;
+    d = a + -b;
+    a = b * c.b;
+
+    when( i == 1 ){
+        out<<'1';
+    } else when( i == 2 ){
         in>>a;
     }
 

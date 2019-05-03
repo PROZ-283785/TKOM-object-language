@@ -53,3 +53,6 @@ class TokenType(enum.Enum):
 
 
 t_operator = [TokenType.t_comparison, TokenType.t_assignment, TokenType.t_inequality, TokenType.t_goe, TokenType.t_loe, TokenType.t_less, TokenType.t_greater, TokenType.t_output, TokenType.t_input, TokenType.t_addition, TokenType.t_division, TokenType.t_multiplication, TokenType.t_difference]
+t_logical_operators = [TokenType.t_logical_and, TokenType.t_logical_or]
+t_relational_operators = [TokenType.t_goe, TokenType.t_loe, TokenType.t_less, TokenType.t_greater, TokenType.t_comparison, TokenType.t_inequality]
+t_multiplication_operators = [TokenType.t_multiplication, TokenType.t_division]

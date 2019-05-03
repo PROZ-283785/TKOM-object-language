@@ -264,6 +264,16 @@ class Lexer:
 
         return tokens.TokenType.t_character_constant
 
+    def index_token(self):
+        symbol = self.source.next_symbol()
+
+        if symbol == ']':
+            self.value += symbol
+            self.source.next_symbol()
+            return tokens.TokenType.t_index
+        else:
+            return tokens.TokenType.t_unknown
+
     def create_dict(self):
 
         d = dict()
@@ -288,7 +298,7 @@ class Lexer:
         d['-'] = self.check_if_number_or_difference_token
         d['/'] = self.division_token
         d['\''] = self.character_constant_token
-
+        d['['] = self.index_token
         return d
 
     @staticmethod
