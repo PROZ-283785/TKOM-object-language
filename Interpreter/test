@@ -1,15 +1,6 @@
 funkcja(a in, b out, c in out, d){
 
-    loop( i = 1; i < 5; i = i + 1){
 
-    }
-
-    a = fun() + fun() + fun() + a + 2 + a.b;
-    a = car.run();
-    loop(a:b){
-        in>>a;
-    }
-    out<< a + b + c;
     d = a + -b;
     a = b * c.b;
 
@@ -17,8 +8,22 @@ funkcja(a in, b out, c in out, d){
         out<<'1';
     } else when( i == 2 ){
         in>>a;
+    } else {
+        this.a = b;
     }
 
+    loop( i = 1; i < 5; i = i + 1){
+        a = b;
+    }
+
+    fun(c out);
+    fun(d out);
+    a = c + d + a + 2 + a.b;
+    a = car.run(a in out);
+    loop(a:b){
+        in>>a;
+    }
+    out<< a + b + c;
 }
 
 obiekt{
@@ -26,7 +31,7 @@ obiekt{
     operator = (){
 
     }
-    fun(){
+    fun(a in, b out){
 
     }
 

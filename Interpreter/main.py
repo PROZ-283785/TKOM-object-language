@@ -16,7 +16,12 @@ def main():
     src.set_data(fo)
     lex = lexer.Lexer(src)
     parser = pars.Parser(lex)
-    print(parser.parse())
+    try:
+        print(parser.parse())
+    except Exception:
+        for error_message in parser.error_message_buffer:
+            print(error_message)
+
 
     # token = lex.get_token()
     # print(token)

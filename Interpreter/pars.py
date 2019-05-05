@@ -1,3 +1,7 @@
+from copy import copy
+
+import env
+import error_messages
 import tokens
 
 
@@ -6,77 +10,91 @@ class Parser:
     def __init__(self, lex):
         self.lexer = lex
         self.current_token = lex.get_token()
+        self.previous_token = None
+        self.error_message_buffer = []
+        self.error_handler = error_messages.Error(self.lexer.source)
 
     def consume_token(self):
+        self.previous_token = copy(self.current_token)
         self.current_token = self.lexer.get_token()
-
-    def consume_identifier(self):
-        if self.current_token.token_type != tokens.TokenType.t_identifier:
-            raise Exception("Powinien być identyfikator")
-        self.consume_token()
 
     def parse(self):
         while self.current_token.token_type != tokens.TokenType.t_eof:
-            self.consume_identifier()
-            self.try_parse_function()
-            self.try_parse_object()
-        return "OK"
+            if self.try_parse_identifier():
+                if not(self.try_parse_function() or self.try_parse_object()):
+                    raise Exception("Powinna być funkcja albo obiekt")
+            else:
+                break
+        if len(self.error_message_buffer) == 0:
+            return True
+        else:
+            for message in self.error_message_buffer:
+                print(message)
+            return False
 
     def try_parse_function(self):
-        if self.current_token.token_type != tokens.TokenType.t_left_parenthesis:
+        # lewy_nawias, [lista_argumentów], prawy_nawias
+        # [słowo_kluczowe_extends, identyfikator], blok
+        if not self.try_parse_left_parenthesis():
             return False
-        self.consume_token()
         self.try_parse_list_of_arguments()
-        if self.current_token.token_type != tokens.TokenType.t_right_parenthesis:
-            raise Exception("Powiniene byc prawy nawias")
-        self.consume_token()
+        if not self.try_parse_right_parenthesis():
+            self.error_message_buffer.append(self.error_handler.get_error(self.previous_token, error_messages.right_parenthesis_message))
+            raise Exception("Brak prawego nawiasu")
         self.try_parse_extends()
-        if not self.try_parse_block():
-            raise Exception("Powinien byc blok")
-        return True
+        self.try_parse_block()
 
     def try_parse_block(self):
+        # lewy_nawias_klamrowy, {instrukcja}, prawy_nawias_klamrowy
         if not self.try_parse_left_brace():
-            raise Exception("Blok - brak lewgo otwierajacego")
+            self.error_message_buffer.append(self.error_handler.get_error(self.previous_token, error_messages.left_brace_message))
+            raise Exception("Brak lewego nawiasu")
         self.try_parse_instructions()
         if not self.try_parse_right_brace():
-            raise Exception("Powinien byc prawy klamrowy")
+            self.error_message_buffer.append(self.error_handler.get_error(self.previous_token, error_messages.right_brace_message))
+            raise Exception("Brak prawego nawiasu")
         return True
 
     def try_parse_object(self):
+        # [słowo_kluczowe_extends, identyfikator], lewy_nawias_klamrowy,
+        # {atrybut | metoda | przeciążanie_operatora}, prawy_nawias_klamrowy
         self.try_parse_extends()
-        if self.current_token.token_type != tokens.TokenType.t_left_brace:
-            return
-        self.consume_token()
-        while self.current_token.token_type != tokens.TokenType.t_right_brace:
-            self.try_parse_method_or_attribute()
-            self.try_parse_operator_overloading()
-        self.consume_token()
+        if not self.try_parse_left_brace():
+            return False
+        while not self.try_parse_right_brace():
+            if not(self.try_parse_method_or_attribute() or self.try_parse_operator_overloading()):
+                raise Exception("Musi byc atrybut, metoda lub przeciazenie")
+        return True
 
     def try_parse_list_of_arguments(self):
         # { argument_z_przecinkiem }, argument
         if self.try_parse_argument():
-            if self.current_token.token_type == tokens.TokenType.t_comma:
-                self.consume_token()
-                self.try_parse_list_of_arguments()
+            if self.try_parse_comma():
+                if not self.try_parse_list_of_arguments():
+                    self.error_message_buffer.append(
+                        self.error_handler.get_error(self.previous_token, "invalid syntax"))
+                    raise Exception("Blednie podana lista argumentow")
+            return True
+        else:
+            return False
 
     def try_parse_argument(self):
         # identyfikator, [ słowo_kluczowe_in ], [ słowo_kluczowe_out ]
-        if self.current_token.token_type != tokens.TokenType.t_identifier:
+        if not self.try_parse_identifier():
             return False
-        self.consume_token()
-        if self.current_token.token_type == tokens.TokenType.t_key_value and self.current_token.value == 'in':
-            self.consume_token()
-        if self.current_token.token_type == tokens.TokenType.t_key_value and self.current_token.value == 'out':
-            self.consume_token()
+        if self.try_parse_in_keyword():
+            pass
+        if self.try_parse_out_keyword():
+            pass
         return True
 
     def try_parse_extends(self):
-        if self.current_token.value == 'extends':
-            self.consume_token()
-            if self.current_token.token_type != tokens.TokenType.t_identifier:
+        if self.try_parse_extends_keyword():
+            if not self.try_parse_identifier():
+                self.error_message_buffer.append(
+                    self.error_handler.get_error(self.previous_token, error_messages.identifier_message))
                 raise Exception("Powinien byc ident po extends")
-            self.consume_token()
+        return True
 
     def try_parse_instructions(self):
         # przypisanie | wywołanie_funkcji_metody | instrukcja_warunkowa | pętla |
@@ -99,13 +117,13 @@ class Parser:
     def try_parse_assignment_or_method_function_call(self):
         if self.try_parse_assignment_with_this():
             if not self.try_parse_semicolon():
-                raise Exception("Brak srednika")
+                self.error_message_buffer.append(self.error_handler.get_error(self.previous_token, error_messages.semicolon_message))
             return True
         if self.try_parse_identifier():
             if not (self.try_parse_function_or_method_call() or self.try_parse_assignment()):
                 raise Exception("Musi byc wywolanie lub przypisanie")
             if not self.try_parse_semicolon():
-                raise Exception("Brak srednika")
+                self.error_message_buffer.append(self.error_handler.get_error(self.previous_token, error_messages.semicolon_message))
             return True
         return False
 
@@ -113,42 +131,41 @@ class Parser:
         # lewy_nawias, [lista_argumentów], prawy_nawias, [dwukropek,
         #                                                 identyfikator, lewy_nawias, [lista_argumentów],
         #                                                 prawy_nawias], blok
-        if self.current_token.token_type != tokens.TokenType.t_left_parenthesis:
+        if not self.try_parse_left_parenthesis():
             return False
-        self.consume_token()
         self.try_parse_list_of_arguments()
-        if self.current_token.token_type != tokens.TokenType.t_right_parenthesis:
-            raise Exception("Powinien byc prawy nawias okragly")
-        self.consume_token()
-        if self.current_token.token_type == tokens.TokenType.t_colon:
-            self.consume_token()
-            if self.current_token.token_type != tokens.TokenType.t_identifier:
+        if not self.try_parse_right_parenthesis():
+            self.error_message_buffer.append(self.error_handler.get_error(self.previous_token, error_messages.right_parenthesis_message))
+            raise Exception("Brak prawego nawiasu")
+        if self.try_parse_colon():
+            if not self.try_parse_identifier():
+                self.error_message_buffer.append(
+                    self.error_handler.get_error(self.previous_token, error_messages.identifier_message))
                 raise Exception("Powinien byc identyfikator")
-            self.consume_token()
-            if self.current_token.token_type != tokens.TokenType.t_left_parenthesis:
-                raise Exception("Powinien byc otwierajacy")
-            self.consume_token()
+            if not self.try_parse_left_parenthesis():
+                self.error_message_buffer.append(
+                    self.error_handler.get_error(self.previous_token, error_messages.left_parenthesis_message))
+                raise Exception("Brak lewego nawiasu")
             self.try_parse_list_of_arguments()
-            if self.current_token.token_type != tokens.TokenType.t_right_parenthesis:
-                raise Exception("Powinien byc prawy okragly")
-            self.consume_token()
+            if not self.try_parse_right_parenthesis():
+                self.error_message_buffer.append(self.error_handler.get_error(self.previous_token, error_messages.right_parenthesis_message))
+                raise Exception("Brak prawego nawiasu")
         self.try_parse_block()
         return True
 
     def try_parse_operator_overloading(self):
         # słowo_kluczowe_operator, operator, lewy_nawias,
         # [lista_argumentów], prawy_nawias, blok
-        if self.current_token.value != 'operator':
+        if not self.try_parse_operator_keyword():
             return False
-        self.consume_token()
         self.try_parse_operator()
-        if self.current_token.token_type != tokens.TokenType.t_left_parenthesis:
-            raise Exception("Powinien byc lewy otwierajacy")
-        self.consume_token()
+        if not self.try_parse_left_parenthesis():
+            self.error_message_buffer.append(self.error_handler.get_error(self.previous_token, error_messages.left_parenthesis_message))
+            raise Exception("Brak lewego nawiasu")
         self.try_parse_list_of_arguments()
-        if self.current_token.token_type != tokens.TokenType.t_right_parenthesis:
-            raise Exception("Powininien byc prawy zamykajacy")
-        self.consume_token()
+        if not self.try_parse_right_parenthesis():
+            self.error_message_buffer.append(self.error_handler.get_error(self.previous_token, error_messages.right_parenthesis_message))
+            raise Exception("Brak prawego nawiasu")
         self.try_parse_block()
         return True
 
@@ -159,16 +176,16 @@ class Parser:
         # (stała_znakowa | słowo_kluczowe_none | operator_indeksu |
         #  wyrażenie_arytmetyczne), średnik;
         if self.try_parse_left_brace():
-            if self.current_token.token_type == tokens.TokenType.t_key_value and self.current_token.value == 'get':
-                self.consume_token()
+            if self.try_parse_get_keyword():
                 if not self.try_parse_semicolon():
-                    raise Exception("Powinien byc srednik")
-            if self.current_token.token_type == tokens.TokenType.t_key_value and self.current_token.value == 'set':
-                self.consume_token()
+                    self.error_message_buffer.append(self.error_handler.get_error(self.previous_token, error_messages.semicolon_message))
+            if self.try_parse_set_keyword():
                 if not self.try_parse_semicolon():
-                    raise Exception("Powinien byc srednik")
+                    self.error_message_buffer.append(self.error_handler.get_error(self.previous_token, error_messages.semicolon_message))
             if not self.try_parse_right_brace():
-                raise Exception("Powinien byc prawy klamrowy")
+                self.error_message_buffer.append(
+                    self.error_handler.get_error(self.previous_token, error_messages.right_brace_message))
+                raise Exception("Brak prawego nawiasu")
             if not self.try_parse_assignment_operator():
                 raise Exception("Powinno byc przypisanie")
         elif not self.try_parse_assignment_operator():
@@ -176,18 +193,7 @@ class Parser:
         if not (self.try_parse_character_constant() or self.try_parse_none_keyword() or self.try_parse_index() or self.try_parse_arithmetic_expression()):
             raise Exception("Brak (stała_znakowa | słowo_kluczowe_none | operator_indeksu |  wyrażenie_arytmetyczne)")
         if not self.try_parse_semicolon():
-            raise Exception("Brak średnika")
-
-    def try_parse_operator(self):
-        if self.current_token.token_type not in tokens.t_operator:
-            raise Exception("Brak operatora")
-        self.consume_token()
-        return True
-
-    def try_parse_identifier(self):
-        if self.current_token.token_type != tokens.TokenType.t_identifier:
-            return False
-        self.consume_token()
+            self.error_message_buffer.append(self.error_handler.get_error(self.previous_token, error_messages.semicolon_message))
         return True
 
     def try_parse_assignment(self):
@@ -203,11 +209,16 @@ class Parser:
         # wyrażenie_arytmetyczne
         if self.try_parse_this_keyword():
             if not self.try_parse_dot():
+                self.error_message_buffer.append(
+                    self.error_handler.get_error(self.previous_token, error_messages.dot_message))
                 raise Exception("Musi byc kropka")
             if not self.try_parse_identifier():
+                self.error_message_buffer.append(
+                    self.error_handler.get_error(self.previous_token, error_messages.identifier_message))
                 raise Exception("Musi byc ident")
             if not self.try_parse_assignment_operator():
-                raise Exception("Brak op przypisania")
+                self.error_message_buffer.append(
+                    self.error_handler.get_error(self.previous_token, error_messages.assignment_operator_message))
             if not self.try_parse_arithmetic_expression():
                 raise Exception("Brak wyr arytm")
             return True
@@ -226,7 +237,9 @@ class Parser:
         if self.try_parse_left_parenthesis():
             self.try_parse_list_of_arguments()
             if not self.try_parse_right_parenthesis():
-                raise Exception("Brak prawego nawiasu okraglego")
+                self.error_message_buffer.append(
+                    self.error_handler.get_error(self.previous_token, error_messages.right_parenthesis_message))
+                raise Exception("Brak praweog nawiasu")
             return True
         return False
 
@@ -234,12 +247,16 @@ class Parser:
         # kropka, identyfikator, lewy_nawias, [lista_argumentów], prawy_nawias, średnik
         if self.try_parse_dot():
             if not self.try_parse_identifier():
+                self.error_message_buffer.append(
+                    self.error_handler.get_error(self.previous_token, error_messages.identifier_message))
                 raise Exception("Brak identyfikatora")
             if not self.try_parse_left_parenthesis():
+                self.error_message_buffer.append(self.error_handler.get_error(self.previous_token, error_messages.left_parenthesis_message))
                 raise Exception("Brak lewego nawiasu")
             self.try_parse_list_of_arguments()
             if not self.try_parse_right_parenthesis():
-                raise Exception("Brak nawiasu prawego")
+                self.error_message_buffer.append(self.error_handler.get_error(self.previous_token, error_messages.right_parenthesis_message))
+                raise Exception("Brak prawego nawiasu")
             return True
         return False
 
@@ -251,15 +268,14 @@ class Parser:
             return False
         if not self.try_parse_condition():
             raise Exception("Brak warunku")
-        if not self.try_parse_block():
-            raise Exception("Brak bloku")
+        self.try_parse_block()
         while self.try_parse_else():
             if self.try_parse_when():
-                if not self.try_parse_block():
-                    raise Exception("Blad w bloku")
+                if not self.try_parse_condition():
+                    raise Exception("Brak warunku")
+                self.try_parse_block()
             else:
-                if not self.try_parse_block():
-                    raise Exception("Blad w bloku")
+                self.try_parse_block()
                 break
         return True
         
@@ -267,36 +283,45 @@ class Parser:
         # słowo_kluczowe_loop, lewy_nawias, ((this albo ident)przypisanie, średnik, warunek,
         #                                    średnik, krok | identyfikator, dwukropek, identyfikator),
         # prawy_nawias, blok
-        if self.current_token.token_type != tokens.TokenType.t_key_value or self.current_token.value != 'loop':
+        if not self.try_parse_loop_keyword():
             return False
-        self.consume_token()
         if not self.try_parse_left_parenthesis():
-            raise Exception("Brak lewego okraglego")
-
+            self.error_message_buffer.append(self.error_handler.get_error(self.previous_token, error_messages.left_parenthesis_message))
+            raise Exception("Brak lewego nawiasu")
         if self.try_parse_assignment_with_this():
             if not self.try_parse_semicolon():
-                raise Exception("Brak srednika")
-        #     parsujj warunek i krok
+                self.error_message_buffer.append(
+                    self.error_handler.get_error(self.previous_token, error_messages.semicolon_message))
+            if not self.try_parse_condition():
+                raise Exception("Brak warunku")
+            if not self.try_parse_semicolon():
+                self.error_message_buffer.append(
+                    self.error_handler.get_error(self.previous_token, error_messages.semicolon_message))
+            if not self.try_parse_step():
+                raise Exception("Brak kroku")
         else:
             if not self.try_parse_identifier():
                 return False
             if not (self.try_parse_collection_loop() or self.try_parse_conditional_loop()):
                 raise Exception("Zla petla")
         if not self.try_parse_right_parenthesis():
+            self.error_message_buffer.append(
+                self.error_handler.get_error(self.previous_token, error_messages.right_parenthesis_message))
             raise Exception("Brak prawego nawiasu")
-        if not self.try_parse_block():
-            raise Exception("Zly blok")
+        self.try_parse_block()
         return True
 
     def try_parse_conditional_loop(self):
         if not self.try_parse_assignment():
             return False
         if not self.try_parse_semicolon():
-            raise Exception("Brak srednika")
+            self.error_message_buffer.append(
+                self.error_handler.get_error(self.previous_token, error_messages.semicolon_message))
         if not self.try_parse_condition():
             raise Exception("Brak warunku")
         if not self.try_parse_semicolon():
-            raise Exception("Brak srednika")
+            self.error_message_buffer.append(
+                self.error_handler.get_error(self.previous_token, error_messages.semicolon_message))
         if not self.try_parse_step():
             raise Exception("Brak kroku")
         return True
@@ -325,7 +350,8 @@ class Parser:
             raise Exception("Brak slowa out")
         if self.try_parse_arithmetic_expression() or self.try_parse_character_constant():
             if not self.try_parse_semicolon():
-                raise Exception("Powinien byc srednik!")
+                self.error_message_buffer.append(
+                    self.error_handler.get_error(self.previous_token, error_messages.semicolon_message))
         else:
             raise Exception("Powinno byc wyrazenie lub stala")
         return True
@@ -365,7 +391,7 @@ class Parser:
             return True
         if self.try_parse_identifier():
             if self.try_parse_function_call() or self.try_parse_method_call_or_attribute_ref():
-                return True
+                pass
             return True
         if self.try_parse_this_keyword():
             if not self.try_parse_attribute_reference():
@@ -375,6 +401,8 @@ class Parser:
     def try_parse_attribute_reference(self):
         if self.try_parse_dot():
             if not self.try_parse_identifier():
+                self.error_message_buffer.append(
+                    self.error_handler.get_error(self.previous_token, error_messages.identifier_message))
                 raise Exception("Brak identyfikatora")
             return True
         return False
@@ -384,25 +412,29 @@ class Parser:
         # identyfikator, kropka, identyfikator, lewy_nawias, [ lista_argumentów ], prawy_nawias - wywołanie
         if self.try_parse_dot():
             if not self.try_parse_identifier():
+                self.error_message_buffer.append(
+                    self.error_handler.get_error(self.previous_token, error_messages.identifier_message))
                 raise Exception("Brak identyfikatora")
             if self.try_parse_left_parenthesis():
                 self.try_parse_list_of_arguments()
                 if not self.try_parse_right_parenthesis():
-                    raise Exception("Brak prawego okraglego")
+                    self.error_message_buffer.append(
+                        self.error_handler.get_error(self.previous_token, error_messages.right_parenthesis_message))
+                    raise Exception("Brak prawego nawiasu")
             return True
         return False
 
     def try_parse_in(self):
         # słowo_kluczowe_in, operator_wczytywania, identyfikator, średnik
-        if not (self.current_token.token_type == tokens.TokenType.t_key_value and self.current_token.value == 'in'):
+        if not self.try_parse_in_keyword():
             return False
-        self.consume_token()
         if not self.try_parse_input():
             raise Exception("Brak >>")
         if not self.try_parse_identifier():
             raise Exception("Brak identyfikatora")
         if not self.try_parse_semicolon():
-            raise Exception("Brak średnika")
+            self.error_message_buffer.append(
+                self.error_handler.get_error(self.previous_token, error_messages.semicolon_message))
         return True
 
     def try_parse_collection_loop(self):
@@ -410,6 +442,8 @@ class Parser:
         if not self.try_parse_colon():
             return False
         if not self.try_parse_identifier():
+            self.error_message_buffer.append(
+                self.error_handler.get_error(self.previous_token, error_messages.identifier_message))
             raise Exception("Brak identyfikatora")
         return True
 
@@ -418,23 +452,28 @@ class Parser:
         if not self.try_parse_condition_component():
             raise Exception("Brak składowej")
         while self.try_parse_logical_operators():
-            self.try_parse_condition_component()
+            if not self.try_parse_condition_component():
+                return False
+        return True
 
     def try_parse_condition_component(self):
         # czynnik, {operator_relacyjny, czynnik}
         if not self.try_parse_factor():
             raise Exception("Brak czynnika")
         while self.try_parse_relational_operators():
-            self.try_parse_factor()
+            if not self.try_parse_factor():
+                return False
+        return True
 
     def try_parse_factor(self):
         # ([operator_negacji], lewy_nawias, warunek, prawy_nawias) |
         # wyrażenie_arytmetyczne
-        if not (self.try_parse_arithmetic_expression() or self.try_parse_parenthesis_expression()):
+        if not (self.try_parse_parenthesis_expression() or self.try_parse_arithmetic_expression()):
             raise Exception("Brak wyrazenia lub nawiasow")
         return True
 
     def try_parse_parenthesis_expression(self):
+        # ([operator_negacji], lewy_nawias, warunek, prawy_nawias)
         negation = False
         if self.try_parse_logical_negation_operator():
            negation = True
@@ -443,7 +482,21 @@ class Parser:
         if not self.try_parse_condition():
             raise Exception("Brak warunku")
         if not self.try_parse_right_parenthesis():
-            raise Exception("Brak prawego okraglego")
+            self.error_message_buffer.append(
+                self.error_handler.get_error(self.previous_token, error_messages.right_parenthesis_message))
+            raise Exception("Brak prawego nawiasu")
+        return True
+
+    def try_parse_operator(self):
+        if self.current_token.token_type not in tokens.t_operator:
+            raise Exception("Brak operatora")
+        self.consume_token()
+        return True
+
+    def try_parse_identifier(self):
+        if self.current_token.token_type != tokens.TokenType.t_identifier:
+            return False
+        self.consume_token()
         return True
 
     def try_parse_logical_negation_operator(self):
@@ -452,11 +505,6 @@ class Parser:
             return True
         return False
 
-    # Zaznacz które komponenty muszą byc a które są opcjonalne bo masz wybory
-    # i czy sa takie ktore w jednym miejscu sa opcjonalne a w innym nie
-    # Moze wtedy przeniesc wyjatki na sam dol
-    # Jak obsluzyc to dalej?
-    #
     def try_parse_logical_operators(self):
         if self.current_token.token_type in tokens.t_logical_operators:
             self.consume_token()
@@ -591,6 +639,48 @@ class Parser:
 
     def try_parse_else(self):
         if self.current_token.token_type == tokens.TokenType.t_key_value and self.current_token.value == 'else':
+            self.consume_token()
+            return True
+        return False
+
+    def try_parse_comma(self):
+        if self.current_token.token_type == tokens.TokenType.t_comma:
+            self.consume_token()
+            return True
+        return False
+
+    def try_parse_in_keyword(self):
+        if self.current_token.token_type == tokens.TokenType.t_key_value and self.current_token.value == 'in':
+            self.consume_token()
+            return True
+        return False
+
+    def try_parse_extends_keyword(self):
+        if self.current_token.token_type == tokens.TokenType.t_key_value and self.current_token.value == 'extends':
+            self.consume_token()
+            return True
+        return False
+
+    def try_parse_operator_keyword(self):
+        if self.current_token.token_type == tokens.TokenType.t_key_value and self.current_token.value == 'operator':
+            self.consume_token()
+            return True
+        return False
+
+    def try_parse_get_keyword(self):
+        if self.current_token.token_type == tokens.TokenType.t_key_value and self.current_token.value == 'get':
+            self.consume_token()
+            return True
+        return False
+
+    def try_parse_set_keyword(self):
+        if self.current_token.token_type == tokens.TokenType.t_key_value and self.current_token.value == 'set':
+            self.consume_token()
+            return True
+        return False
+
+    def try_parse_loop_keyword(self):
+        if self.current_token.token_type == tokens.TokenType.t_key_value and self.current_token.value == 'loop':
             self.consume_token()
             return True
         return False
