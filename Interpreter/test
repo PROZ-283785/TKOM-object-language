@@ -1,7 +1,9 @@
 funkcja(a in, b out, c in out, d){
 
-
-    d = a + -b;
+    a = 1;
+    b = 2;
+    dodaj(a in, b in, c out);
+    d = ((a + -b) * (a + c));
     a = b * c.b;
 
     when( i == 1 ){
@@ -12,12 +14,11 @@ funkcja(a in, b out, c in out, d){
         this.a = b;
     }
 
-    loop( i = 1; i < 5; i = i + 1){
+    loop( i = 1; i < 5; fun(i out)){
         a = b;
     }
 
-    fun(c out);
-    fun(d out);
+
     a = c + d + a + 2 + a.b;
     a = car.run(a in out);
     loop(a:b){
@@ -26,7 +27,11 @@ funkcja(a in, b out, c in out, d){
     out<< a + b + c;
 }
 
-obiekt{
+dodaj(a in, b in, c out){
+    c = a + b;
+}
+
+obiekt1{
 
     operator = (){
 

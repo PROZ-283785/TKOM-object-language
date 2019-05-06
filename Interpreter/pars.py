@@ -7,9 +7,10 @@ import tokens
 
 class Parser:
 
-    def __init__(self, lex):
+    def __init__(self, lex, environment):
         self.lexer = lex
-        self.current_token = lex.get_token()
+        self.environment = environment
+        self.current_token = self.lexer.get_token()
         self.previous_token = None
         self.error_message_buffer = []
         self.error_handler = error_messages.Error(self.lexer.source)
@@ -20,10 +21,14 @@ class Parser:
 
     def parse(self):
         while self.current_token.token_type != tokens.TokenType.t_eof:
-            if self.try_parse_identifier():
-                if not(self.try_parse_function() or self.try_parse_object()):
-                    raise Exception("Powinna być funkcja albo obiekt")
-            else:
+            try:
+                if self.try_parse_identifier():
+                    if not(self.try_parse_function() or self.try_parse_object()):
+                        raise Exception("Powinna być funkcja albo obiekt")
+                else:
+                    break
+            except Exception as e:
+                print(e.args)
                 break
         if len(self.error_message_buffer) == 0:
             return True
@@ -35,14 +40,18 @@ class Parser:
     def try_parse_function(self):
         # lewy_nawias, [lista_argumentów], prawy_nawias
         # [słowo_kluczowe_extends, identyfikator], blok
+        fun_name = self.previous_token.value
         if not self.try_parse_left_parenthesis():
             return False
+        function = env.Function()
         self.try_parse_list_of_arguments()
         if not self.try_parse_right_parenthesis():
             self.error_message_buffer.append(self.error_handler.get_error(self.previous_token, error_messages.right_parenthesis_message))
             raise Exception("Brak prawego nawiasu")
         self.try_parse_extends()
         self.try_parse_block()
+        self.environment.functions[fun_name] = function
+        return True
 
     def try_parse_block(self):
         # lewy_nawias_klamrowy, {instrukcja}, prawy_nawias_klamrowy
@@ -58,12 +67,17 @@ class Parser:
     def try_parse_object(self):
         # [słowo_kluczowe_extends, identyfikator], lewy_nawias_klamrowy,
         # {atrybut | metoda | przeciążanie_operatora}, prawy_nawias_klamrowy
+        object_name = self.previous_token.value
         self.try_parse_extends()
         if not self.try_parse_left_brace():
             return False
+        object = env.Object()
         while not self.try_parse_right_brace():
             if not(self.try_parse_method_or_attribute() or self.try_parse_operator_overloading()):
+                self.error_message_buffer.append(
+                    self.error_handler.get_error(self.previous_token, error_messages.invalid_syntax_message))
                 raise Exception("Musi byc atrybut, metoda lub przeciazenie")
+        self.environment.objects[object_name] = object
         return True
 
     def try_parse_list_of_arguments(self):
@@ -82,10 +96,12 @@ class Parser:
         # identyfikator, [ słowo_kluczowe_in ], [ słowo_kluczowe_out ]
         if not self.try_parse_identifier():
             return False
+        argument = env.Argument(self.previous_token.value)
         if self.try_parse_in_keyword():
-            pass
+            argument.keywords.append(self.previous_token.value)
         if self.try_parse_out_keyword():
-            pass
+            argument.keywords.append(self.previous_token.value)
+        # element.list_of_arguments.append(argument)
         return True
 
     def try_parse_extends(self):
@@ -109,6 +125,8 @@ class Parser:
     def try_parse_method_or_attribute(self):
         if self.try_parse_identifier():
             if not (self.try_parse_method() or self.try_parse_attribute()):
+                self.error_message_buffer.append(
+                    self.error_handler.get_error(self.previous_token, error_messages.invalid_syntax_message))
                 raise Exception("Musi byc metoda lub atrybut")
             return True
         else:
@@ -121,6 +139,8 @@ class Parser:
             return True
         if self.try_parse_identifier():
             if not (self.try_parse_function_or_method_call() or self.try_parse_assignment()):
+                self.error_message_buffer.append(
+                    self.error_handler.get_error(self.previous_token, error_messages.invalid_syntax_message))
                 raise Exception("Musi byc wywolanie lub przypisanie")
             if not self.try_parse_semicolon():
                 self.error_message_buffer.append(self.error_handler.get_error(self.previous_token, error_messages.semicolon_message))
@@ -187,10 +207,14 @@ class Parser:
                     self.error_handler.get_error(self.previous_token, error_messages.right_brace_message))
                 raise Exception("Brak prawego nawiasu")
             if not self.try_parse_assignment_operator():
+                self.error_message_buffer.append(
+                    self.error_handler.get_error(self.previous_token, error_messages.invalid_syntax_message))
                 raise Exception("Powinno byc przypisanie")
         elif not self.try_parse_assignment_operator():
             return False
         if not (self.try_parse_character_constant() or self.try_parse_none_keyword() or self.try_parse_index() or self.try_parse_arithmetic_expression()):
+            self.error_message_buffer.append(
+                self.error_handler.get_error(self.previous_token, error_messages.invalid_syntax_message))
             raise Exception("Brak (stała_znakowa | słowo_kluczowe_none | operator_indeksu |  wyrażenie_arytmetyczne)")
         if not self.try_parse_semicolon():
             self.error_message_buffer.append(self.error_handler.get_error(self.previous_token, error_messages.semicolon_message))
@@ -200,6 +224,8 @@ class Parser:
         # operator_przypisania, wyrażenie_arytmetyczne, średnik
         if self.try_parse_assignment_operator():
             if not self.try_parse_arithmetic_expression():
+                self.error_message_buffer.append(
+                    self.error_handler.get_error(self.previous_token, error_messages.invalid_syntax_message))
                 raise Exception("Brak wyrazenia arytmetycznego")
             return True
         return False
@@ -220,17 +246,15 @@ class Parser:
                 self.error_message_buffer.append(
                     self.error_handler.get_error(self.previous_token, error_messages.assignment_operator_message))
             if not self.try_parse_arithmetic_expression():
+                self.error_message_buffer.append(
+                    self.error_handler.get_error(self.previous_token, error_messages.invalid_syntax_message))
                 raise Exception("Brak wyr arytm")
             return True
         return False
 
     def try_parse_function_or_method_call(self):
         # wywołanie_metody | wywołanie_funkcji
-        if self.try_parse_identifier():
-            if not (self.try_parse_function_call() or self.try_parse_method_call()):
-                raise Exception("Musi byc wywolana funkcja lub metoda")
-            return True
-        return False
+        return self.try_parse_function_call() or self.try_parse_method_call()
 
     def try_parse_function_call(self):
         # lewy_nawias, [lista_argumentów], prawy_nawias, średnik
@@ -267,11 +291,15 @@ class Parser:
         if not self.try_parse_when():
             return False
         if not self.try_parse_condition():
+            self.error_message_buffer.append(
+                self.error_handler.get_error(self.previous_token, error_messages.invalid_syntax_message))
             raise Exception("Brak warunku")
         self.try_parse_block()
         while self.try_parse_else():
             if self.try_parse_when():
                 if not self.try_parse_condition():
+                    self.error_message_buffer.append(
+                        self.error_handler.get_error(self.previous_token, error_messages.invalid_syntax_message))
                     raise Exception("Brak warunku")
                 self.try_parse_block()
             else:
@@ -293,16 +321,22 @@ class Parser:
                 self.error_message_buffer.append(
                     self.error_handler.get_error(self.previous_token, error_messages.semicolon_message))
             if not self.try_parse_condition():
+                self.error_message_buffer.append(
+                    self.error_handler.get_error(self.previous_token, error_messages.invalid_syntax_message))
                 raise Exception("Brak warunku")
             if not self.try_parse_semicolon():
                 self.error_message_buffer.append(
                     self.error_handler.get_error(self.previous_token, error_messages.semicolon_message))
             if not self.try_parse_step():
+                self.error_message_buffer.append(
+                    self.error_handler.get_error(self.previous_token, error_messages.invalid_syntax_message))
                 raise Exception("Brak kroku")
         else:
             if not self.try_parse_identifier():
                 return False
             if not (self.try_parse_collection_loop() or self.try_parse_conditional_loop()):
+                self.error_message_buffer.append(
+                    self.error_handler.get_error(self.previous_token, error_messages.invalid_syntax_message))
                 raise Exception("Zla petla")
         if not self.try_parse_right_parenthesis():
             self.error_message_buffer.append(
@@ -318,22 +352,33 @@ class Parser:
             self.error_message_buffer.append(
                 self.error_handler.get_error(self.previous_token, error_messages.semicolon_message))
         if not self.try_parse_condition():
+            self.error_message_buffer.append(
+                self.error_handler.get_error(self.previous_token, error_messages.invalid_syntax_message))
             raise Exception("Brak warunku")
         if not self.try_parse_semicolon():
             self.error_message_buffer.append(
                 self.error_handler.get_error(self.previous_token, error_messages.semicolon_message))
         if not self.try_parse_step():
+            self.error_message_buffer.append(
+                self.error_handler.get_error(self.previous_token, error_messages.invalid_syntax_message))
             raise Exception("Brak kroku")
         return True
 
     def try_parse_step(self):
-        # identyfikator, operator_przypisania, (wyrażenie_arytmetyczne |
-        #                                       wywołanie_funkcji_metody)
+        # (identyfikator, operator_przypisania, wyrażenie_arytmetyczne) |
+        #                                       wywołanie_funkcji_metody
         if not self.try_parse_identifier():
             return False
-        if not self.try_parse_assignment_operator():
-            raise Exception("Brak operatora przypisania")
-        if not (self.try_parse_arithmetic_expression() or self.try_parse_function_or_method_call()):
+        if self.try_parse_assignment_operator():
+            if not self.try_parse_arithmetic_expression():
+                self.error_message_buffer.append(
+                    self.error_handler.get_error(self.previous_token, error_messages.invalid_syntax_message))
+                raise Exception("Brak wyrazenia")
+        elif self.try_parse_function_or_method_call():
+            pass
+        else:
+            self.error_message_buffer.append(
+                self.error_handler.get_error(self.previous_token, error_messages.invalid_syntax_message))
             raise Exception("Brak wyrazenia lub wywolania")
         return True
 
@@ -347,12 +392,16 @@ class Parser:
         if not self.try_parse_out_keyword():
             return False
         if not self.try_parse_output():
+            self.error_message_buffer.append(
+                self.error_handler.get_error(self.previous_token, error_messages.invalid_syntax_message))
             raise Exception("Brak slowa out")
         if self.try_parse_arithmetic_expression() or self.try_parse_character_constant():
             if not self.try_parse_semicolon():
                 self.error_message_buffer.append(
                     self.error_handler.get_error(self.previous_token, error_messages.semicolon_message))
         else:
+            self.error_message_buffer.append(
+                self.error_handler.get_error(self.previous_token, error_messages.invalid_syntax_message))
             raise Exception("Powinno byc wyrazenie lub stala")
         return True
 
@@ -361,6 +410,8 @@ class Parser:
         if self.try_parse_component():
             while self.try_parse_addition():
                 if not self.try_parse_component():
+                    self.error_message_buffer.append(
+                        self.error_handler.get_error(self.previous_token, error_messages.invalid_syntax_message))
                     raise Exception("Powinna byc skladowa")
             return True
         return False
@@ -370,6 +421,8 @@ class Parser:
         if self.try_parse_element():
             while self.try_parse_multiplication():
                 if not self.try_parse_element():
+                    self.error_message_buffer.append(
+                        self.error_handler.get_error(self.previous_token, error_messages.invalid_syntax_message))
                     raise Exception("Brak elementu")
             return True
         return False
@@ -395,6 +448,8 @@ class Parser:
             return True
         if self.try_parse_this_keyword():
             if not self.try_parse_attribute_reference():
+                self.error_message_buffer.append(
+                    self.error_handler.get_error(self.previous_token, error_messages.invalid_syntax_message))
                 raise Exception("Powinno byc odwolanie do atrybutu")
         return False
 
@@ -409,7 +464,7 @@ class Parser:
 
     def try_parse_method_call_or_attribute_ref(self):
         # kropka, identyfikator - referencja
-        # identyfikator, kropka, identyfikator, lewy_nawias, [ lista_argumentów ], prawy_nawias - wywołanie
+        # kropka, identyfikator, lewy_nawias, [ lista_argumentów ], prawy_nawias - wywołanie
         if self.try_parse_dot():
             if not self.try_parse_identifier():
                 self.error_message_buffer.append(
@@ -429,8 +484,12 @@ class Parser:
         if not self.try_parse_in_keyword():
             return False
         if not self.try_parse_input():
+            self.error_message_buffer.append(
+                self.error_handler.get_error(self.previous_token, error_messages.invalid_syntax_message))
             raise Exception("Brak >>")
         if not self.try_parse_identifier():
+            self.error_message_buffer.append(
+                self.error_handler.get_error(self.previous_token, error_messages.invalid_syntax_message))
             raise Exception("Brak identyfikatora")
         if not self.try_parse_semicolon():
             self.error_message_buffer.append(
@@ -450,6 +509,8 @@ class Parser:
     def try_parse_condition(self):
         # składowa_warunku, {operator_logiczny, składowa_warunku}
         if not self.try_parse_condition_component():
+            self.error_message_buffer.append(
+                self.error_handler.get_error(self.previous_token, error_messages.invalid_syntax_message))
             raise Exception("Brak składowej")
         while self.try_parse_logical_operators():
             if not self.try_parse_condition_component():
@@ -459,6 +520,8 @@ class Parser:
     def try_parse_condition_component(self):
         # czynnik, {operator_relacyjny, czynnik}
         if not self.try_parse_factor():
+            self.error_message_buffer.append(
+                self.error_handler.get_error(self.previous_token, error_messages.invalid_syntax_message))
             raise Exception("Brak czynnika")
         while self.try_parse_relational_operators():
             if not self.try_parse_factor():
@@ -469,6 +532,8 @@ class Parser:
         # ([operator_negacji], lewy_nawias, warunek, prawy_nawias) |
         # wyrażenie_arytmetyczne
         if not (self.try_parse_parenthesis_expression() or self.try_parse_arithmetic_expression()):
+            self.error_message_buffer.append(
+                self.error_handler.get_error(self.previous_token, error_messages.invalid_syntax_message))
             raise Exception("Brak wyrazenia lub nawiasow")
         return True
 
@@ -480,6 +545,8 @@ class Parser:
         if not self.try_parse_left_parenthesis():
             return False
         if not self.try_parse_condition():
+            self.error_message_buffer.append(
+                self.error_handler.get_error(self.previous_token, error_messages.invalid_syntax_message))
             raise Exception("Brak warunku")
         if not self.try_parse_right_parenthesis():
             self.error_message_buffer.append(
@@ -489,6 +556,8 @@ class Parser:
 
     def try_parse_operator(self):
         if self.current_token.token_type not in tokens.t_operator:
+            self.error_message_buffer.append(
+                self.error_handler.get_error(self.previous_token, error_messages.invalid_syntax_message))
             raise Exception("Brak operatora")
         self.consume_token()
         return True

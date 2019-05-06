@@ -51,6 +51,7 @@ class StreamSource(Source):
             self.column = 0
             # read second char ( windows end line)
             self.data.read(1)
+            self.data_position += 1
             symbol = 'EOT'
         else:
             self.column += 1
@@ -58,10 +59,9 @@ class StreamSource(Source):
         return symbol
 
     def get_data_range(self, start_position, length):
-        data_position = self.data_position
         self.data.seek(start_position)
         output = self.data.read(length)
-        self.data.seek(data_position)
+        self.data.seek(self.data_position)
         return output
 
 

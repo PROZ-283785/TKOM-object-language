@@ -38,7 +38,10 @@ class Attribute:
         self.value = None
 
 
-
+class Argument:
+    def __init__(self, name):
+        self.name = name
+        self.keywords = []
 
 
 
