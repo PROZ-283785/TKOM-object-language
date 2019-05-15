@@ -33,6 +33,13 @@ def main():
     #     print(token)
 
 
+def test():
+    els = [(1, 2), (2, 3)]
+    for el1, el2 in els:
+        print(el1)
+        print(el2)
+
+
 if __name__ == "__main__":
-    main()
-    # test()
+    # main()
+    test()

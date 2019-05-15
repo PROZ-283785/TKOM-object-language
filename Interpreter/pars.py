@@ -12,6 +12,7 @@ class Parser:
         self.environment = environment
         self.current_token = self.lexer.get_token()
         self.previous_token = None
+        self.class_stack = []
         self.error_message_buffer = []
         self.error_handler = error_messages.Error(self.lexer.source)
 
@@ -84,6 +85,7 @@ class Parser:
         # { argument_z_przecinkiem }, argument
         if self.try_parse_argument():
             if self.try_parse_comma():
+                # usunac rekurencje
                 if not self.try_parse_list_of_arguments():
                     self.error_message_buffer.append(
                         self.error_handler.get_error(self.previous_token, "invalid syntax"))
@@ -696,6 +698,7 @@ class Parser:
 
     def try_parse_integer(self):
         if self.current_token.token_type == tokens.TokenType.t_integer:
+            self.class_stack.append(env.Integer(self.current_token.value))
             self.consume_token()
             return True
         return False
