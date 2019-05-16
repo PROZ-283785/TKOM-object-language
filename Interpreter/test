@@ -1,3 +1,8 @@
+fun(){
+    in>>a;
+    out<<'sadf';
+}
+
 funkcja(a in, b out, c in out, d){
 
     a = 1;

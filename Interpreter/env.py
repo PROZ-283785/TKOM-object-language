@@ -12,30 +12,28 @@ class Environment:
 
 
 class Object:
-    def __init__(self, name, attributes, methods, overridden_ops, base_obj):
+    def __init__(self, attributes, methods, overridden_ops, base_obj):
         """
            attributes - key : name, value : Attribute
            methods - key : name, value : Function
            operators - key : operator, value : Operator
         """
-        self.name = name
         self.attributes = {}
         self.methods = {}
         self.overridden_operators = {}
-        self.base_object = None
+        self.base_object = base_obj
 
 
 class Function:
-    def __init__(self):
-        self.name = None
-        self.list_of_arguments = []
-        self.block = []
-        self.extending_object = None
+    def __init__(self, list_of_args, block, ext_obj):
+        self.list_of_arguments = list_of_args
+        self.block = block
+        self.extending_object = ext_obj
 
 
 class Attribute:
     def __init__(self):
-        self.name = None
+        self.identifier = None
         self.has_getter = False
         self.has_setter = False
         self.type = None
@@ -44,7 +42,7 @@ class Attribute:
 
 class Method:
     def __init__(self):
-        self.name = None
+        self.identifier = None
         self.list_of_arguments = []
         self.base_object = None
         self.arguments_passed_to_base_object = []
@@ -67,7 +65,7 @@ class Instruction:
 class Assignment:
     def __init__(self):
         self.has_this_keyword = False
-        self.name = None
+        self.identifier = None
         self.arithmetic_expression = None
 
 
@@ -91,15 +89,15 @@ class CollectionLoop:
 
 
 class Argument:
-    def __init__(self, name):
-        self.name = name
-        self.has_in_keyword = False
-        self.has_out_keyword = False
+    def __init__(self, name, has_in, has_out):
+        self.identifier = name
+        self.has_in_keyword = has_in
+        self.has_out_keyword = has_out
 
 
 class Block:
-    def __init__(self):
-        self.instructions = []
+    def __init__(self, instructions):
+        self.instructions = instructions
 
 
 class MethodCall:
@@ -111,7 +109,7 @@ class MethodCall:
 
 class FunctionCall:
     def __init__(self):
-        self.name = None
+        self.identifier = None
         self.arguments = []
         self.extending_object = None
 
@@ -126,13 +124,13 @@ class ConditionalInstruction:
 
 
 class Input:
-    def __init__(self):
-        self.identifier = None
+    def __init__(self, identifier):
+        self.identifier = identifier
 
 
 class Output:
-    def __init__(self):
-        self.source = None
+    def __init__(self, value):
+        self.source = value
 
     def execute(self):
         print(self.source.execute())
@@ -220,16 +218,16 @@ class Integer:
 
 
 class Identifier:
-    def __init__(self):
-        self.name = None
+    def __init__(self, name):
+        self.name = name
 
     def execute(self):
         return self.name
 
 
 class CharacterConstant:
-    def __init__(self):
-        self.value = None
+    def __init__(self, value):
+        self.value = value
 
     def execute(self):
         return self.value
