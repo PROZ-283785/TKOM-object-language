@@ -1,13 +1,196 @@
-fun(){
-    in>>a;
-    out<<'sadf';
+main(){
+   x = 1;
+   y = None;
+   f(x, y );
+   out<<x;
+   out<<y;
+
+   loop(i = 1; i < 4; i = i + 1){
+        j = i * i;
+        wypisz(i, j);
+   }
+
+    a = None;
+    Car(a);
+    new_speed = None;
+    a.getSpeed(new_speed);
 }
 
-funkcja(a in, b out, c in out, d){
+
+Car{
+    speed = 100;
+
+    Car(car out){ }
+
+    setSpeed(new_speed){
+        speed = new_speed;
+    }
+
+    getSpeed(sp out){
+        sp = this.speed;
+    }
+
+}
+
+
+
+wypisz(a, b){
+    out<<b;
+}
+
+
+f(a, x out){
+    b = 2;
+    f1(b, x);
+
+}
+
+f1(a, y out){
+    y = a + 5;
+}
+
+
+power(x, y, z out){
+
+   x = 2;
+    y = 6;
+    z = 0;
+
+    power(x, y, z);
+    out<< z;
+    #####
+    when( y == 1 ){
+        z = x;
+    } else {
+        c = y - 1;
+        d = None;
+        power(x, c, d);
+        z = x * d;
+    }
+
+}
+
+sum(b in, c out){
+
+ c = 0;
+    d = 3;
+    out<< d;
+    sum(d, c);
+    out<< c;
+    ####
+    when( b >= 1 ){
+        a = b - 1;
+        d = 0;
+        rek(a, d);
+        c = d + b;
+    } else {
+        c = 0;
+    }
+
+}
+
+
+fun(a in){
+    out<<a;
+    b = 9;
+    c = 3;
+    out<< c;
+    fun2(b, c);
+    out<< c;
+}
+
+fun2(b, c out){
+    out<< b * b;
+    c = 5;
+}
+
+
+pomocniczyFun(){
+#petle
+b = 2;
+    a = b;
+    a = a + 2;
+    out<<a;
+
+    i = 5;
+    out<< i;
+    loop( i = 1; i < 5; i = i + 1){
+        loop( j = 1; j <= i; j = j + 1){
+            out<<'i';
+            out<<i;
+            out<<'j';
+            out<<j;
+        }
+    }
+
+
+
+###
+
+    i = 0;
+    a = 1;
+    out<<'Wejscie';
+    out<< i;
+    out<< a;
+
+    when( a != 2 && a >= 1){
+        out<<'mam';
+    }
+
+
+# testy when
+    when(a < 3){
+        i = i + 1;
+        out<<'Wnetrze pierwsze';
+        out<< i;
+        out<< a;
+        a = 3;
+        when(a == 3){
+            out<<'Wnetrze drugie';
+            i = i + 1;
+            out<< i;
+            a = 4;
+            out<< a;
+        }
+        out<< i;
+        out<< a;
+    }else when(a == 3){
+        out<< i;
+        out<< a;
+    }else{
+        out<< i;
+        out<< a + 3;
+    }
+    out<< i;
+    out<< a;
+
+
+    ########
+
+    b = None;
+    in>> b;
+    a = 4 + b;
+    out<< a;
+    a = a + 4;
+    out<< a;
+    out<< a * (2 - 4) * (2 + 3 + 4) * 4;
+}
+
+car{
+    speed {get; set;} = 100;
+    color {get;} = None;
+    tires = 2 + 2;
+}
+
+nowaFunkcja() extends obiekt{
+    out<<'a';
+}
+
+funkcja(a in, b out, c in out, d)  extends obiekt{
 
     a = 1;
     b = 2;
-    dodaj(a in, b in, c out);
+    dodaj(a, b, c);
     d = ((a + -b) * (a + c));
     a = b * c.b;
 
@@ -19,7 +202,7 @@ funkcja(a in, b out, c in out, d){
         this.a = b;
     }
 
-    loop( i = 1; i < 5; fun(i out)){
+    loop( i = 1; i < 5; i = i + 1){
         a = b;
     }
 
@@ -34,13 +217,14 @@ funkcja(a in, b out, c in out, d){
 
 dodaj(a in, b in, c out){
     c = a + b;
+
 }
-
 obiekt1{
-
+    a = 5;
     operator = (){
 
     }
+
     fun(a in, b out){
 
     }
@@ -48,5 +232,7 @@ obiekt1{
 }
 
 obiekt extends obiekt1{
+    obiekt(a):obiekt1(a){
 
+    }
 }

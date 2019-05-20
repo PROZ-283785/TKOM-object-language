@@ -158,7 +158,7 @@ class Lexer:
             self.source.next_symbol()
             return tokens.TokenType.t_inequality
         else:
-            return tokens.TokenType.t_negation_operator
+            return tokens.TokenType.t_negation
 
     def check_if_logical_or_output(self):
         symbol = self.source.next_symbol()
@@ -246,13 +246,7 @@ class Lexer:
 
     def check_if_number_or_difference_token(self):
         symbol = self.source.next_symbol()
-
-        if symbol in digits:
-            self.value += symbol
-            self.find_int()
-            return
-        else:
-            return tokens.TokenType.t_difference
+        return tokens.TokenType.t_difference
 
     def character_constant_token(self):
         symbol = self.source.next_symbol()
@@ -303,4 +297,4 @@ class Lexer:
 
     @staticmethod
     def create_keyword_list():
-        return ['when', 'else', 'loop', 'operator', 'in', 'out', 'extends', 'none', 'get', 'set', 'this']
+        return ['when', 'else', 'loop', 'operator', 'in', 'out', 'extends', 'None', 'get', 'set', 'this']

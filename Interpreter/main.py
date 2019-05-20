@@ -1,4 +1,7 @@
+from pprint import pprint
+
 import env
+import interpreter
 import pars
 import source
 import tokens
@@ -6,19 +9,18 @@ import lexer
 
 
 def main():
-
     src = source.StreamSource()
     fo = open("test", "r", encoding='utf-8', newline='\n')
     environment = env.Environment()
     src.set_data(fo)
     lex = lexer.Lexer(src)
     parser = pars.Parser(lex, environment)
+    inter = interpreter.Interpreter(environment, parser)
+    inter.interpret()
 
-    print(parser.parse())
-
-    # print(environment.functions)
-    # print(environment.objects)
-
+    print()
+    # pprint(environment.functions)
+    # pprint(environment.objects)
     # token = lex.get_token()
     # print(token)
     # i = 0
@@ -33,13 +35,62 @@ def main():
     #     print(token)
 
 
-def test():
-    els = [(1, 2), (2, 3)]
-    for el1, el2 in els:
-        print(el1)
-        print(el2)
+def test(function, *args, error_message=None):
+    print(*args)
+    if not function(*args):
+        if error_message is None:
+            return False
+        else:
+            raise RuntimeError(error_message)
+    return True
+
+
+def fun2():
+    return True
+
+
+def fun(a, b, c):
+    b = c
+    return a == b
+
+
+class Env:
+    def __init__(self, number):
+        self.value = number
+
+    def notify(self, object):
+        print(f"moje:{self.value} cudze:{object.__class__.__name__}")
+
+
+class Base:
+    shared_element = Env(2)
+
+    def __init__(self, value):
+        self.value = value
+
+
+class DerivedClass(Base):
+
+    def __init__(self, value):
+        super().__init__(value)
+        self.size = 10
+        self.name = "Tom"
+
+        self.shared_element.notify(self)
+
+
+def testowa():
+    a = 1
+    if a == 1:
+        if a == 1:
+            a = 3
+    print(a)
 
 
 if __name__ == "__main__":
     main()
-    # test()
+    # print(test(fun2, error_message=None))
+    # testowa()
+
+
+

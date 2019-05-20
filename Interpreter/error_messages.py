@@ -5,7 +5,7 @@ class Error:
         self.source = source
 
     def get_error(self, token, message):
-        return f"Error in line:{token.line} column:{token.column} \"{self.source.get_data_range(token.position_in_file - 5, 10)}\"  -> {message}"
+        return f"Error in line:{token.line} column:{token.column} \"{self.source.get_data_range(token.position_in_file, 10)}\"  -> {message}"
 
 
 semicolon_message = "Missing semicolon"
