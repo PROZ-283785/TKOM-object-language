@@ -1,33 +1,39 @@
 main(){
-   x = 1;
-   y = None;
-   f(x, y );
-   out<<x;
-   out<<y;
-
-   loop(i = 1; i < 4; i = i + 1){
-        j = i * i;
-        wypisz(i, j);
-   }
-
-    a = None;
-    Car(a);
-    new_speed = None;
-    a.getSpeed(new_speed);
+    car = None;
+    sp = 10 + 10 * 2;
+    Car(sp, car);
+    out<<car.speed;
+    # new_speed = None;
+    #a.getSpeed(new_speed);
 }
 
 
 Car{
-    speed = 100;
+    speed = None;
 
-    Car(car out){ }
+    Car(newSpeed, car out){
+        when(newSpeed < 100){
+            when(newSpeed < 50){
+                when(newSpeed < 20){
+                    speed = 20;
+                } else {
+                    speed = 50;
+                }
+            } else {
+                speed = 100;
+            }
+        } else {
+            speed = newSpeed;
+        }
 
-    setSpeed(new_speed){
-        speed = new_speed;
+    }
+
+    setSpeed(newSpeed){
+        speed = newSpeed;
     }
 
     getSpeed(sp out){
-        sp = this.speed;
+        sp = speed;
     }
 
 }
@@ -106,6 +112,9 @@ fun2(b, c out){
 
 
 pomocniczyFun(){
+
+
+
 #petle
 b = 2;
     a = b;

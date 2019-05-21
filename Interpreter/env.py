@@ -60,14 +60,18 @@ class Method:
             else:
                 object = context.objects[self.identifier.name]
                 virtual_table = VirtualTable(self.identifier.name, object)
-                self.block.execute(virtual_table)
 
             # create virt table
             # wykonaj block
             # przypisz virt do zmiennej wyjsciowej
             pass
         # wykonanie czegokolwiek na obiekcie wymaga aktualizacji virtual_table
-        self.block.execute()
+        new_context = Context(context, virtual_table=virtual_table, level=context.level + 1)
+        self.block.execute(new_context)
+        for argument in self.list_of_arguments:
+            if argument.has_out_keyword:
+                new_context.set_value(argument.identifier, new_context.virtual_table)
+                break
 
     def __repr__(self):
         return self.__str__()
@@ -81,7 +85,7 @@ class Attribute:
         self.identifier = identifier
         self.has_getter = has_getter
         self.has_setter = has_setter
-        self.value = value
+        self.value = value.execute(None)
         self.type = find_type(value)
 
     def execute(self, context):
@@ -214,12 +218,12 @@ class FunctionCall:
     def execute(self, context):
         # może to być konstruktor
         if context.objects.get(self.identifier.name, None) is not None:
-            constructor = context.objects.methods[self.identifier.name]
+            constructor = context.objects[self.identifier.name].methods[self.identifier.name]
             con_args = constructor.list_of_arguments
             linked_args = {arg.identifier.name: value.identifier for arg, value in zip(con_args, self.arguments)}
             new_context = Context(context, level=context.level + 1)
             new_context.args = linked_args
-            context.objects[self.identifier.name].execute(new_context, is_constructor=True)
+            context.objects[self.identifier.name].methods[self.identifier.name].execute(new_context, is_constructor=True)
         else:
             function = context.functions[self.identifier.name]
             fun_args = function.list_of_arguments
@@ -408,7 +412,10 @@ class AttributeReference:
         self.r_identifier = r_ident
 
     def execute(self, context):
-        pass
+        virtual_table = context.get_value(self.l_identifier)
+        if find_type(virtual_table) != 'VirtualTable':
+            raise Exception("Attribute reference not referencing to the object type value!")
+        return virtual_table.get_attribute_value(self.r_identifier.name)
 
 
 class Identifier:
@@ -432,66 +439,71 @@ class NoneKeyVal:
 
 
 class VirtualTable:
-    def __init__(self, object_name, object):
+    def __init__(self, object_name, object: Object):
         self.object_type = object_name
         self.attributes = object.attributes
         self.methods = object.methods
-        self.overridden_operators = object.overridden_ops
+        self.overridden_operators = object.overridden_operators
 
-    def get_attribute_value(self, attribute_name):
+    def get_attribute_value(self, attribute_name: str):
         try:
-            return self.attributes[attribute_name]
+            return self.attributes[attribute_name].value
         except KeyError:
             raise KeyError("Trying to get value from non-existing attribute")
 
-    def set_attribute_value(self, attribute_name, value):
+    def set_attribute_value(self, attribute_name: str, value):
         try:
-            self.attributes[attribute_name] = value
+            self.attributes[attribute_name].value = value
         except KeyError:
             raise KeyError("Trying to get value from non-existing attribute")
 
 
-class ObjectContext:
-    def __init__(self, virtual_table: VirtualTable, level=1):
-        self.level = level
-        self.virtual_table = virtual_table
-        self.local_variables = {}
-        self.args = {}
-
-    def set_value(self, identifier: Identifier, value):
-        try:
-            self.virtual_table.set_attribute_value(identifier.name, value)
-        except KeyError:
-            if identifier.name in self.args:
-                related_identifier = self.args[identifier.name]
-                
-            else:
-                self.local_variables[identifier.name] = value
-
-
-    def get_value(self, identifier: Identifier):
-        try:
-            return self.virtual_table.get_attribute_value(identifier.name)
-        except KeyError:
-            if identifier.name in self.args:
-                return self.args[identifier.name]
-            elif identifier.name in self.local_variables:
-                return self.local_variables[identifier.name]
-            else:
-                raise Exception("Nie ma takeigo elementu")
+# class ObjectContext:
+#     def __init__(self, virtual_table: VirtualTable, level=1):
+#         self.level = level
+#         self.virtual_table = virtual_table
+#         self.local_variables = {}
+#         self.args = {}
+#
+#     def set_value(self, identifier: Identifier, value):
+#         try:
+#             self.virtual_table.set_attribute_value(identifier.name, value)
+#         except KeyError:
+#             if identifier.name in self.args:
+#                 related_identifier = self.args[identifier.name]
+#
+#             else:
+#                 self.local_variables[identifier.name] = value
+#
+#
+#     def get_value(self, identifier: Identifier):
+#         try:
+#             return self.virtual_table.get_attribute_value(identifier.name)
+#         except KeyError:
+#             if identifier.name in self.args:
+#                 return self.args[identifier.name]
+#             elif identifier.name in self.local_variables:
+#                 return self.local_variables[identifier.name]
+#             else:
+#                 raise Exception("Nie ma takeigo elementu")
 
 
 class Context:
-    def __init__(self, previous_context=None, functions=None, objects=None, level=1):
+    def __init__(self, previous_context=None, functions=None, objects=None, virtual_table: VirtualTable = None,
+                 level=1):
         self.level = level
         self.previous_context = previous_context
         self.local_variables = {}  # key -> identifier value->value
         self.args = {}  # key -> identifier.name value->identifier
-        if functions is None:
+        if virtual_table is None and previous_context is not None:
+            self.virtual_table = previous_context.virtual_table
+        else:
+            self.virtual_table = virtual_table
+        if functions is None and previous_context is not None:
             self.functions = previous_context.functions
         else:
             self.functions = functions
-        if objects is None:
+        if objects is None and previous_context is not None:
             self.objects = previous_context.objects
         else:
             self.objects = objects
@@ -503,6 +515,8 @@ class Context:
                 self.previous_context.set_value(related_identifier, value)
             else:
                 raise Exception("Something unexpected")
+        elif self.virtual_table is not None and identifier.name in self.virtual_table.attributes:
+            self.virtual_table.set_attribute_value(identifier.name, value)
         elif identifier.name in self.local_variables:
             self.local_variables[identifier.name] = value
         elif self.previous_context is not None:
@@ -516,7 +530,7 @@ class Context:
     # set_value in current context kiedy mamy when i zmienna z gory nadpisujemy
     # set_value in base_context kiedy arg jest out
     @staticmethod
-    def set_if_exists(context, identifier, value):
+    def set_if_exists(context, identifier: Identifier, value):
         if identifier.name in context.args:
             related_identifier = context.args[identifier.name]
             if find_type(related_identifier) == 'identifier':
@@ -524,17 +538,23 @@ class Context:
                 return True
             else:
                 raise Exception("Something unexpected")
+        elif context.virtual_table is not None and identifier.name in context.virtual_table.attributes:
+            context.virtual_table.set_attribute_value(identifier.name, value)
+            return True
         elif identifier.name in context.local_variables:
             context.local_variables[identifier.name] = value
             return True
+        return False
 
-    def get_value(self, identifier):
+    def get_value(self, identifier: Identifier):
         if identifier.name in self.args:
             value = self.args[identifier.name]
             if find_type(value) == 'identifier':
                 return self.previous_context.get_value(value)
             else:
                 return value
+        elif self.virtual_table is not None and identifier.name in self.virtual_table.attributes:
+            self.virtual_table.get_attribute_value(identifier.name)
         elif identifier.name in self.local_variables:
             return self.local_variables[identifier.name]
         else:
@@ -551,7 +571,7 @@ def find_type(value):
         return 'int'
     elif value.__class__.__name__ == 'Identifier':
         return 'identifier'
-    elif value.__class__.__name__ == 'Method' or 'Attribute' or 'OverriddenOperator':
+    elif value.__class__.__name__ == 'Method' or 'Attribute' or 'OverriddenOperator' or 'VirtualTable':
         return value.__class__.__name__
     else:
         raise RuntimeError('Something unexpected happened' + str(value.__class__.__name__))
