@@ -1,5 +1,3 @@
-Obsługa konstruktorów z różną ilością parametrów
-Obsługa konstruktorów podczas dziedziczenia
 Przeciazenie operatorów
 
 Checki:
@@ -11,3 +9,4 @@ Czy funkcje i obiekty extenduja istniejace klasy
 Czy występuje próba przypisania wartości do in
 Czy występuje próba wzięcia wartości z out
 Metody dla operatorów binarnych powinny mieć 3 argumenty, unarnych 2
+Konstruktor dla klasy bazowej wywoływany przy dziedziczeniu nic nie zwraca.

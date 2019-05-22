@@ -6,7 +6,7 @@ class Environment:
     def __init__(self):
         """
             objects - key : name, value : Object
-            functions - key : name, value : Function
+            functions - key : (name, amount_of_args), value : Function
         """
         self.objects = {}
         self.functions = {}
@@ -16,7 +16,7 @@ class Object:
     def __init__(self, attributes, methods, overridden_ops, base_obj):
         """
            attributes - key : name, value : Attribute
-           methods - key : name, value : Function
+           methods - key : (name, amount_of_args), value : Function
            operators - key : operator, value : Operator
         """
         self.attributes = attributes
@@ -66,16 +66,18 @@ class Method:
                 if self.base_object_constructor_call is not None:
                     # obsluz klase nadrzedna wywolujac jej konstruktor
                     base_obj_name = self.base_object_constructor_call.name
-                    #stwórz relacje miedzy argsami - powinno sprawdzić czy ilość się zgadza
-                    constructor_method = context.objects[base_obj_name].methods[base_obj_name]
+                    # stwórz relacje miedzy argsami - powinno sprawdzić czy ilość się zgadza
+                    constructor_method = context.objects[base_obj_name].methods[
+                        (base_obj_name, len(self.arguments_passed_to_base_object))]
                     constructor_method_args = constructor_method.list_of_arguments
                     linked_args = {arg.identifier.name: value.identifier for arg, value in
                                    zip(constructor_method_args, self.arguments_passed_to_base_object)}
-                    new_context = Context(previous_context=context, virtual_table=context.virtual_table, look_previous_context=False, look_virtual_table=True, level=context.level + 1)
+                    new_context = Context(previous_context=context, virtual_table=context.virtual_table,
+                                          look_previous_context=False, look_virtual_table=True, level=context.level + 1)
                     new_context.args = linked_args
-                    #stwórz context nie mogacy patrzec wstecz
-                    #daj virt_table do modyfikacji
-                    constructor_method.execute(new_context, is_constructor= True)
+                    # stwórz context nie mogacy patrzec wstecz
+                    # daj virt_table do modyfikacji
+                    constructor_method.execute(new_context, is_constructor=True)
 
             # wykonaj block
             self.block.execute(context)
@@ -224,7 +226,7 @@ class MethodCall:
     def execute(self, context):
         virtual_table = context.get_value(self.l_identifier)
         object = context.objects[virtual_table.object_type]
-        method = object.methods[self.r_identifier.name]
+        method = object.methods[(self.r_identifier.name, len(self.arguments))]
         method_args = method.list_of_arguments
         linked_args = {arg.identifier.name: value.identifier for arg, value in zip(method_args, self.arguments)}
         new_context = Context(context, virtual_table=virtual_table, look_virtual_table=True, level=context.level + 1)
@@ -242,20 +244,22 @@ class FunctionCall:
     def __init__(self, identifier, args):
         self.identifier = identifier
         self.arguments = args
+        self.amount_of_args = len(self.arguments)
         # self.extending_object = extending_obj
 
     def execute(self, context):
         # może to być konstruktor
         if context.objects.get(self.identifier.name, None) is not None:
-            constructor = context.objects[self.identifier.name].methods[self.identifier.name]
+            constructor = context.objects[self.identifier.name].methods[(self.identifier.name, self.amount_of_args)]
             con_args = constructor.list_of_arguments
             linked_args = {arg.identifier.name: value.identifier for arg, value in zip(con_args, self.arguments)}
             new_context = Context(context, level=context.level + 1)
             new_context.args = linked_args
-            context.objects[self.identifier.name].methods[self.identifier.name].execute(new_context,
-                                                                                        is_constructor=True)
+            context.objects[self.identifier.name].methods[(self.identifier.name, self.amount_of_args)].execute(
+                new_context,
+                is_constructor=True)
         else:
-            function = context.functions[self.identifier.name]
+            function = context.functions[(self.identifier.name, self.amount_of_args)]
             fun_args = function.list_of_arguments
             linked_args = {arg.identifier.name: value.identifier for arg, value in zip(fun_args, self.arguments)}
             new_context = Context(context, virtual_table=None, look_virtual_table=False, level=context.level + 1)
@@ -403,7 +407,11 @@ class ArithmeticExpression:
         result = self.l_component.execute(context)
         for operator, component in self.r_components_with_op:
             if operator == "+":
-                result = result + component.execute(context)
+                if find_type(result) == 'VirtualTable':
+                    if object_has_operator_overloaded(result, operator, context.objects):
+                        result = result + context.objects[result.object_type].overriden_operators['+'].execute(result, component.execute(context))
+                else:
+                    result = result + component.execute(context)
             elif operator == "-":
                 result = result - component.execute(context)
         return result
@@ -471,7 +479,8 @@ class NoneKeyVal:
 class VirtualTable:
     def __init__(self, object_name, object: Object, env_objects: dict):
         self.object_type = object_name
-        self.attributes, self.methods, self.overridden_operators = self.create_dicts(object, env_objects, object.base_object)
+        self.attributes, self.methods, self.overridden_operators = self.create_dicts(object, env_objects,
+                                                                                     object.base_object)
 
     def get_attribute_value(self, attribute_name: str):
         try:
@@ -563,6 +572,7 @@ class Context:
     """
         look_previous -> functions and methods cant look to previous context, when and loop can        
     """
+
     def set_value(self, identifier: Identifier, value):
         if identifier.name in self.args:
             related_identifier = self.args[identifier.name]
@@ -628,6 +638,18 @@ def find_type(value):
     return value.__class__.__name__
 
 
+def object_has_operator_overloaded(object_instance: VirtualTable, operator, objects: dict):
+    object = objects.get(object_instance.object_type, None)
+    if object is not None:
+        # obiekt istnieje
+        for overridden_operator in object.overridden_operators:
+            if overridden_operator == operator:
+                return True
+        return False
+    else:
+        raise Exception('Missing object!')
+
+
 def move_extending_functions_to_objects(environment):
     fails = []
     identifiers_to_delete = []
@@ -636,9 +658,11 @@ def move_extending_functions_to_objects(environment):
         if extending_object is not None:
             extending_object_name = extending_object.name
             if environment.objects.get(extending_object_name, None) is None:
-                fails.append(f"Fail in function {identifier} -> trying to extend non-existing object: {function.extending_object}")
+                fails.append(
+                    f"Fail in function {identifier[0]} -> trying to extend non-existing object: "
+                    f"{function.extending_object}")
             elif environment.objects[extending_object_name].methods.get(identifier, None) is not None:
-                fails.append(f"Fail - function {identifier} declared more than once")
+                fails.append(f"Fail - function {identifier[0]} declared more than once")
             else:
                 environment.objects[extending_object_name].methods[identifier] = function
                 identifiers_to_delete.append(identifier)
@@ -647,9 +671,3 @@ def move_extending_functions_to_objects(environment):
         del environment.functions[identifier]
 
     return fails
-
-
-
-
-
-

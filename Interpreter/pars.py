@@ -48,7 +48,7 @@ class Parser:
         extending_object = self.parse_extends()
         block = self.parse_block()
         function = env.Function(list_of_args, block, extending_object)
-        self.environment.functions[identifier.name] = function
+        self.environment.functions[(identifier.name, len(list_of_args))] = function
         return True
 
     def parse_block(self):
@@ -78,7 +78,7 @@ class Parser:
                 element = self.class_stack.pop()
                 element_type = env.find_type(element)
                 if element_type == 'Method':
-                    methods[element.identifier.name] = element
+                    methods[(element.identifier.name, len(element.list_of_arguments))] = element
                 elif element_type == 'Attribute':
                     attributes[element.identifier.name] = element
                 elif element_type == 'OverriddenOperator':

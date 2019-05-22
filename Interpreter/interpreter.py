@@ -8,7 +8,7 @@ class Interpreter:
 
     def interpret(self):
         if self.parser.parse():
-            starting_fun = 'main'
+            starting_fun = ('main', 0)
             if starting_fun in self.environment.functions:
                 fails = env.move_extending_functions_to_objects(self.environment)
                 if len(fails) != 0:
