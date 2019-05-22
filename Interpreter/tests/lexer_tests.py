@@ -16,12 +16,12 @@ class LexerTest(unittest.TestCase):
     def test_check_if_returns_when_token(self):
         code = "when \0"
         self.manage_source(code)
-        self.assertEqual(self.lex.get_token().token_type, tokens.TokenType.t_when)
+        self.assertEqual(self.lex.get_token().token_type, tokens.TokenType.t_key_value)
 
     def test_check_if_returns_else_token(self):
         code = "else \0"
         self.manage_source(code)
-        self.assertEqual(self.lex.get_token().token_type, tokens.TokenType.t_else)
+        self.assertEqual(self.lex.get_token().token_type, tokens.TokenType.t_key_value)
 
     def test_check_if_unknown_token(self):
         code = "& \0"
@@ -31,13 +31,13 @@ class LexerTest(unittest.TestCase):
     def test_check_if_loop_token(self):
         code = "loop \0"
         self.manage_source(code)
-        self.assertEqual(self.lex.get_token().token_type, tokens.TokenType.t_loop)
+        self.assertEqual(self.lex.get_token().token_type, tokens.TokenType.t_key_value)
 
     def test_check_sequence_of_tokens(self):
-        code = "in out none \0"
+        code = "in out None \0"
         self.manage_source(code)
         token = [self.lex.get_token().token_type for _ in range(3)]
-        self.assertEqual(token, [tokens.TokenType.t_in, tokens.TokenType.t_out, tokens.TokenType.t_none])
+        self.assertEqual(token, [tokens.TokenType.t_key_value, tokens.TokenType.t_key_value, tokens.TokenType.t_key_value])
 
     def test_check_value_of_int_token(self):
         code = "123 \0"

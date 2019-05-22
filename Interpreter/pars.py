@@ -10,7 +10,7 @@ class Parser:
     def __init__(self, lex, environment):
         self.lexer = lex
         self.environment = environment
-        self.current_token = self.lexer.get_token()
+        self.current_token = None
         self.previous_token = None
         self.class_stack = []
         self.error_message_buffer = []
@@ -21,6 +21,7 @@ class Parser:
         self.current_token = self.lexer.get_token()
 
     def parse(self):
+        self.consume_token()
         while self.try_parse_identifier():
             # try:
             identifier = self.class_stack.pop()

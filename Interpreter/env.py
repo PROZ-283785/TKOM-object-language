@@ -1,4 +1,4 @@
-from copy import copy
+from copy import copy, deepcopy
 
 
 class Environment:
@@ -44,40 +44,56 @@ class Function:
         self.block.execute(context)
 
 
+# identyfikator, lewy_nawias, [ lista_argumentów ], prawy_nawias, [ dwukropek,
+# identyfikator, lewy_nawias, [ lista_argumentów ], prawy_nawias ], blok;
+# base_obj : Vehicle(argsy)
 class Method:
-    def __init__(self, identifier, list_of_args, base_obj, list_of_base_obj_args, block):
+    def __init__(self, identifier, list_of_args, base_obj=None, list_of_base_obj_args=None, block=None):
         self.identifier = identifier
         self.list_of_arguments = list_of_args
-        self.base_object = base_obj
+        self.base_object_constructor_call = base_obj
         self.arguments_passed_to_base_object = list_of_base_obj_args
         self.block = block
 
-    def execute(self, context, is_constructor=False, virtual_table=None):
+    def execute(self, context, is_constructor=False):
         if is_constructor:
-            if self.base_object is not None:
-                # obsluz klase nadrzedna wywolujac jej konstruktor
-                pass
-            else:
-                object = context.objects[self.identifier.name]
-                virtual_table = VirtualTable(self.identifier.name, object)
-
             # create virt table
+            if context.virtual_table is None:
+                object = context.objects[self.identifier.name]
+                context.virtual_table = VirtualTable(self.identifier.name, object, context.objects)
+            if context.objects[self.identifier.name].base_object is not None:
+                # Car():Vehicle()
+                if self.base_object_constructor_call is not None:
+                    # obsluz klase nadrzedna wywolujac jej konstruktor
+                    base_obj_name = self.base_object_constructor_call.name
+                    #stwórz relacje miedzy argsami - powinno sprawdzić czy ilość się zgadza
+                    constructor_method = context.objects[base_obj_name].methods[base_obj_name]
+                    constructor_method_args = constructor_method.list_of_arguments
+                    linked_args = {arg.identifier.name: value.identifier for arg, value in
+                                   zip(constructor_method_args, self.arguments_passed_to_base_object)}
+                    new_context = Context(previous_context=context, virtual_table=context.virtual_table, look_previous_context=False, look_virtual_table=True, level=context.level + 1)
+                    new_context.args = linked_args
+                    #stwórz context nie mogacy patrzec wstecz
+                    #daj virt_table do modyfikacji
+                    constructor_method.execute(new_context, is_constructor= True)
+
             # wykonaj block
+            self.block.execute(context)
             # przypisz virt do zmiennej wyjsciowej
-            pass
+            for argument in self.list_of_arguments:
+                if argument.has_out_keyword:
+                    context.set_value(argument.identifier, context.virtual_table)
+                    break
+            return
         # wykonanie czegokolwiek na obiekcie wymaga aktualizacji virtual_table
-        new_context = Context(context, virtual_table=virtual_table, level=context.level + 1)
-        self.block.execute(new_context)
-        for argument in self.list_of_arguments:
-            if argument.has_out_keyword:
-                new_context.set_value(argument.identifier, new_context.virtual_table)
-                break
+        # new_context = Context(context, virtual_table=virtual_table, level=context.level + 1)
+        self.block.execute(context)
 
     def __repr__(self):
         return self.__str__()
 
     def __str__(self):
-        return f"Name: {self.identifier.name} Args: {self.list_of_arguments} Base_obj:{self.base_object} B_args:{self.arguments_passed_to_base_object}"
+        return f"Name: {self.identifier.name} Args: {self.list_of_arguments} B_args:{self.arguments_passed_to_base_object}"
 
 
 class Attribute:
@@ -86,7 +102,7 @@ class Attribute:
         self.has_getter = has_getter
         self.has_setter = has_setter
         self.value = value.execute(None)
-        self.type = find_type(value)
+        # self.type = find_type(value)
 
     def execute(self, context):
         return self.value
@@ -95,7 +111,7 @@ class Attribute:
         return self.__str__()
 
     def __str__(self):
-        return f"{self.identifier} {self.value.execute()} {self.type}"
+        return f"{self.identifier} {self.value.execute()}"
 
 
 class Integer:
@@ -146,7 +162,7 @@ class Loop:
         self.block = block
 
     def execute(self, context):
-        new_context = Context(context)
+        new_context = Context(context, look_previous_context=True, level=context.level + 1)
         self.loop.execute(new_context, self.block)
 
 
@@ -206,9 +222,22 @@ class MethodCall:
         self.arguments = args
 
     def execute(self, context):
-        pass
+        virtual_table = context.get_value(self.l_identifier)
+        object = context.objects[virtual_table.object_type]
+        method = object.methods[self.r_identifier.name]
+        method_args = method.list_of_arguments
+        linked_args = {arg.identifier.name: value.identifier for arg, value in zip(method_args, self.arguments)}
+        new_context = Context(context, virtual_table=virtual_table, look_virtual_table=True, level=context.level + 1)
+        new_context.args = linked_args
+        method.execute(new_context)
 
 
+# function = context.functions[self.identifier.name]
+#             fun_args = function.list_of_arguments
+#             linked_args = {arg.identifier.name: value.identifier for arg, value in zip(fun_args, self.arguments)}
+#             new_context = Context(context, level=context.level + 1)
+#             # print(f"Poziom: {new_context.level}")
+#             new_context.args = linked_args
 class FunctionCall:
     def __init__(self, identifier, args):
         self.identifier = identifier
@@ -223,12 +252,13 @@ class FunctionCall:
             linked_args = {arg.identifier.name: value.identifier for arg, value in zip(con_args, self.arguments)}
             new_context = Context(context, level=context.level + 1)
             new_context.args = linked_args
-            context.objects[self.identifier.name].methods[self.identifier.name].execute(new_context, is_constructor=True)
+            context.objects[self.identifier.name].methods[self.identifier.name].execute(new_context,
+                                                                                        is_constructor=True)
         else:
             function = context.functions[self.identifier.name]
             fun_args = function.list_of_arguments
             linked_args = {arg.identifier.name: value.identifier for arg, value in zip(fun_args, self.arguments)}
-            new_context = Context(context, level=context.level + 1)
+            new_context = Context(context, virtual_table=None, look_virtual_table=False, level=context.level + 1)
             # print(f"Poziom: {new_context.level}")
             new_context.args = linked_args
             function.execute(new_context)
@@ -245,12 +275,12 @@ class ConditionalInstruction:
         condition_found = False
         for condition, block in self.condition_with_block:
             if condition.execute(context) == 1:
-                new_context = Context(context, level=context.level + 1)
+                new_context = Context(context, look_previous_context=True, level=context.level + 1)
                 block.execute(new_context)
                 condition_found = True
                 break
         if not condition_found and self.block_without_condition is not None:
-            new_context = Context(context, level=context.level + 1)
+            new_context = Context(context, look_previous_context=True, level=context.level + 1)
             self.block_without_condition.execute(new_context)
 
 
@@ -439,11 +469,9 @@ class NoneKeyVal:
 
 
 class VirtualTable:
-    def __init__(self, object_name, object: Object):
+    def __init__(self, object_name, object: Object, env_objects: dict):
         self.object_type = object_name
-        self.attributes = object.attributes
-        self.methods = object.methods
-        self.overridden_operators = object.overridden_operators
+        self.attributes, self.methods, self.overridden_operators = self.create_dicts(object, env_objects, object.base_object)
 
     def get_attribute_value(self, attribute_name: str):
         try:
@@ -456,6 +484,28 @@ class VirtualTable:
             self.attributes[attribute_name].value = value
         except KeyError:
             raise KeyError("Trying to get value from non-existing attribute")
+
+    @staticmethod
+    def create_dicts(object: Object, env_objects: dict, base_object_id: Identifier = None):
+        attributes = deepcopy(object.attributes)
+        methods = deepcopy(object.methods)
+        overridden_operators = deepcopy(object.overridden_operators)
+        while base_object_id is not None:
+            base_object = env_objects.get(base_object_id.name, None)
+            if base_object is None:
+                raise Exception("Missing object in environment")
+            else:
+                for key, value in base_object.attributes.items():
+                    if key not in attributes:
+                        attributes[key] = deepcopy(value)
+                for key, value in base_object.methods.items():
+                    if key not in methods:
+                        methods[key] = value
+                for key, value in base_object.overridden_operators.items():
+                    if key not in overridden_operators:
+                        overridden_operators[key] = value
+            base_object_id = base_object.base_object
+        return attributes, methods, overridden_operators
 
 
 # class ObjectContext:
@@ -490,12 +540,14 @@ class VirtualTable:
 
 class Context:
     def __init__(self, previous_context=None, functions=None, objects=None, virtual_table: VirtualTable = None,
-                 level=1):
+                 look_previous_context=False, look_virtual_table=True, level=1):
         self.level = level
         self.previous_context = previous_context
         self.local_variables = {}  # key -> identifier value->value
         self.args = {}  # key -> identifier.name value->identifier
-        if virtual_table is None and previous_context is not None:
+        self.can_look_previous_context = look_previous_context
+        self.can_look_virtual_table = look_virtual_table
+        if self.can_look_virtual_table and virtual_table is None and previous_context is not None:
             self.virtual_table = previous_context.virtual_table
         else:
             self.virtual_table = virtual_table
@@ -508,10 +560,13 @@ class Context:
         else:
             self.objects = objects
 
-    def set_value(self, identifier, value):
+    """
+        look_previous -> functions and methods cant look to previous context, when and loop can        
+    """
+    def set_value(self, identifier: Identifier, value):
         if identifier.name in self.args:
             related_identifier = self.args[identifier.name]
-            if find_type(related_identifier) == 'identifier':
+            if find_type(related_identifier) == 'Identifier':
                 self.previous_context.set_value(related_identifier, value)
             else:
                 raise Exception("Something unexpected")
@@ -519,42 +574,49 @@ class Context:
             self.virtual_table.set_attribute_value(identifier.name, value)
         elif identifier.name in self.local_variables:
             self.local_variables[identifier.name] = value
-        elif self.previous_context is not None:
+        elif self.can_look_previous_context and self.previous_context is not None:
             # szukamy we wczesniejszych kontekstach
             if self.set_if_exists(self.previous_context, identifier, value):
                 return
-
+            else:
+                self.local_variables[identifier.name] = value
+        else:
             # trzeba utworzyć zmienna
-        self.local_variables[identifier.name] = value
+            self.local_variables[identifier.name] = value
 
     # set_value in current context kiedy mamy when i zmienna z gory nadpisujemy
     # set_value in base_context kiedy arg jest out
     @staticmethod
     def set_if_exists(context, identifier: Identifier, value):
-        if identifier.name in context.args:
-            related_identifier = context.args[identifier.name]
-            if find_type(related_identifier) == 'identifier':
-                context.previous_context.set_value(related_identifier, value)
+        while context is not None:
+            if identifier.name in context.args:
+                related_identifier = context.args[identifier.name]
+                if find_type(related_identifier) == 'Identifier':
+                    context.previous_context.set_value(related_identifier, value)
+                    return True
+                else:
+                    raise Exception("Something unexpected")
+            elif context.virtual_table is not None and identifier.name in context.virtual_table.attributes:
+                context.virtual_table.set_attribute_value(identifier.name, value)
                 return True
+            elif identifier.name in context.local_variables:
+                context.local_variables[identifier.name] = value
+                return True
+            if context.can_look_previous_context:
+                context = context.previous_context
             else:
-                raise Exception("Something unexpected")
-        elif context.virtual_table is not None and identifier.name in context.virtual_table.attributes:
-            context.virtual_table.set_attribute_value(identifier.name, value)
-            return True
-        elif identifier.name in context.local_variables:
-            context.local_variables[identifier.name] = value
-            return True
+                context = None
         return False
 
     def get_value(self, identifier: Identifier):
         if identifier.name in self.args:
             value = self.args[identifier.name]
-            if find_type(value) == 'identifier':
+            if find_type(value) == 'Identifier':
                 return self.previous_context.get_value(value)
             else:
                 return value
         elif self.virtual_table is not None and identifier.name in self.virtual_table.attributes:
-            self.virtual_table.get_attribute_value(identifier.name)
+            return self.virtual_table.get_attribute_value(identifier.name)
         elif identifier.name in self.local_variables:
             return self.local_variables[identifier.name]
         else:
@@ -563,33 +625,31 @@ class Context:
 
 
 def find_type(value):
-    if value.__class__.__name__ == 'CharacterConstant':
-        return 'char_const'
-    elif value.__class__.__name__ == 'NoneKeyVal':
-        return None
-    elif value.__class__.__name__ == 'ArithmeticExpression':
-        return 'int'
-    elif value.__class__.__name__ == 'Identifier':
-        return 'identifier'
-    elif value.__class__.__name__ == 'Method' or 'Attribute' or 'OverriddenOperator' or 'VirtualTable':
-        return value.__class__.__name__
-    else:
-        raise RuntimeError('Something unexpected happened' + str(value.__class__.__name__))
+    return value.__class__.__name__
 
 
 def move_extending_functions_to_objects(environment):
+    fails = []
     identifiers_to_delete = []
     for identifier, function in environment.functions.items():
         extending_object = function.extending_object
         if extending_object is not None:
             extending_object_name = extending_object.name
             if environment.objects.get(extending_object_name, None) is None:
-                raise Exception("Brak obiektu!")
+                fails.append(f"Fail in function {identifier} -> trying to extend non-existing object: {function.extending_object}")
             elif environment.objects[extending_object_name].methods.get(identifier, None) is not None:
-                raise Exception("Nadpisywanie metody!")
+                fails.append(f"Fail - function {identifier} declared more than once")
             else:
                 environment.objects[extending_object_name].methods[identifier] = function
                 identifiers_to_delete.append(identifier)
 
     for identifier in identifiers_to_delete:
         del environment.functions[identifier]
+
+    return fails
+
+
+
+
+
+

@@ -9,10 +9,15 @@ class Interpreter:
     def interpret(self):
         if self.parser.parse():
             starting_fun = 'main'
-            print(starting_fun)
             if starting_fun in self.environment.functions:
-                env.move_extending_functions_to_objects(self.environment)
+                fails = env.move_extending_functions_to_objects(self.environment)
+                if len(fails) != 0:
+                    for fail in fails:
+                        print(fail)
+                    return
                 main_context = env.Context(functions=self.environment.functions, objects=self.environment.objects)
                 self.environment.functions[starting_fun].execute(main_context)
+                # print()
             else:
-                raise RuntimeError("Missing main function!")
+                print("Missing main function!")
+                return

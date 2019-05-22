@@ -1,17 +1,50 @@
 main(){
     car = None;
     sp = 10 + 10 * 2;
-    Car(sp, car);
-    out<<car.speed;
-    # new_speed = None;
-    #a.getSpeed(new_speed);
+    age = 50;
+    tires = 4;
+    sth = 999;
+    Car(sp, age, tires, sth, car);
+    out<<car.age;
+    out<<car.tires;
+    out<<car.whatever;
+    anotherCar = None;
+    sp = 100;
+    age = age + 20;
+    sth = 1;
+    Car(sp, age, tires, sth, anotherCar);
+    out<<anotherCar.age;
+    out<<anotherCar.whatever;
 }
 
+Vehicle extends Movable{
+    age = 20;
+    tires = None;
 
-Car{
+    Vehicle(newAge, newTires, whatever):Movable(whatever){
+        age = newAge;
+        tires = newTires;
+    }
+
+    getColor(a out){
+        a = color;
+    }
+
+    operator + (lhs, rhs, output out){
+        output = lhs.age + lhs.age;
+    }
+}
+
+Truck{
+    Truck(a, b, c):Vehicle(c){
+
+    }
+}
+
+Car extends Vehicle{
     speed = None;
 
-    Car(newSpeed, car out){
+    Car(newSpeed, age, newTires, whatever, car out):Vehicle(age, newTires, whatever){
         when(newSpeed < 100){
             when(newSpeed < 50){
                 when(newSpeed < 20){
@@ -29,7 +62,9 @@ Car{
     }
 
     setSpeed(newSpeed){
-        speed = newSpeed;
+
+        randSpeed(newSpeed, speed);
+
     }
 
     getSpeed(sp out){
@@ -39,14 +74,36 @@ Car{
 }
 
 
+randSpeed(speed in, shuffledSpeed out){
+    when( speed > 100 ){
+        shuffledSpeed = speed * speed;
+    } else{
+        shuffledSpeed = speed / 2;
+    }
+}
+
+
+Movable {
+    whatever = None;
+    Movable(whateverNew){
+        whatever = whateverNew;
+    }
+}
+
+
+
+
+
 
 wypisz(a, b){
     out<<b;
 }
 
 
+
+
 f(a, x out){
-    b = 2;
+    b = a + 2;
     f1(b, x);
 
 }
@@ -56,15 +113,37 @@ f1(a, y out){
 }
 
 
+
+sum(b in, c out){
+
+    c = 0;
+    d = 5;
+    out<< d;
+    sum(d, c);
+    out<< c;
+    ########
+    when( b >= 1 ){
+        a = b - 1;
+        d = 0;
+        sum(a, d);
+        c = d + b;
+    } else {
+        c = 0;
+    }
+
+}
+
 power(x, y, z out){
 
-   x = 2;
+
+    x = 2;
     y = 6;
     z = 0;
 
     power(x, y, z);
     out<< z;
-    #####
+    #########powyzej jak wywolac
+
     when( y == 1 ){
         z = x;
     } else {
@@ -76,24 +155,6 @@ power(x, y, z out){
 
 }
 
-sum(b in, c out){
-
- c = 0;
-    d = 3;
-    out<< d;
-    sum(d, c);
-    out<< c;
-    ####
-    when( b >= 1 ){
-        a = b - 1;
-        d = 0;
-        rek(a, d);
-        c = d + b;
-    } else {
-        c = 0;
-    }
-
-}
 
 
 fun(a in){
@@ -185,11 +246,6 @@ b = 2;
     out<< a * (2 - 4) * (2 + 3 + 4) * 4;
 }
 
-car{
-    speed {get; set;} = 100;
-    color {get;} = None;
-    tires = 2 + 2;
-}
 
 nowaFunkcja() extends obiekt{
     out<<'a';

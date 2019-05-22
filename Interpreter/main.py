@@ -1,3 +1,4 @@
+import unittest
 from pprint import pprint
 
 import env
@@ -6,7 +7,7 @@ import pars
 import source
 import tokens
 import lexer
-
+from tests import interpreter_tests
 
 def main():
     src = source.StreamSource()
@@ -80,14 +81,16 @@ class DerivedClass(Base):
 
 
 def testowa():
-    a = 1
-    if a == 1:
-        if a == 1:
-            a = 3
-    print(a)
+    constructor_method_args = ['speed']
+    list_of_arguments = ['a', 'speed', 'b']
+
+    linked_args = {arg: value for arg in
+                   constructor_method_args for value in list_of_arguments if arg == value}
+    print(linked_args)
 
 
 if __name__ == "__main__":
+
     main()
     # print(test(fun2, error_message=None))
     # testowa()
