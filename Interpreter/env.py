@@ -139,7 +139,9 @@ class OverriddenOperator:
         self.block = block
 
     def execute(self, context):
-        pass
+        # wywołaj blok i potem zwróć wartość trzymaną w result
+        self.block.execute(context)
+        return context.get_value(self.list_of_arguments[2].identifier)
 
     def __repr__(self):
         return self.__str__()
@@ -409,7 +411,14 @@ class ArithmeticExpression:
             if operator == "+":
                 if find_type(result) == 'VirtualTable':
                     if object_has_operator_overloaded(result, operator, context.objects):
-                        result = result + context.objects[result.object_type].overriden_operators['+'].execute(result, component.execute(context))
+                        overridden_operator_method = context.objects[result.object_type].overridden_operators['+']
+                        method_args = overridden_operator_method.list_of_arguments
+                        linked_args = {method_args[0].identifier.name: result, method_args[1].identifier.name: component.execute(context)}
+                        new_context = Context(context, look_virtual_table=False, level=context.level + 1)
+                        new_context.args = linked_args
+                        result = overridden_operator_method.execute(new_context)
+                    else:
+                        raise TypeError(f"{result.object_type} does not have operator '+' overloaded")
                 else:
                     result = result + component.execute(context)
             elif operator == "-":

@@ -117,7 +117,7 @@ class InterpreterTest(unittest.TestCase):
         self.program.interpret()
         self.assertEqual("6\n", self.output.getvalue())
 
-    def test_multilevel_inheritence(self):
+    def test_multilevel_inheritance(self):
         code = "main(){ testCar = None; testSpeed = 80; Car(testSpeed, testCar); car = None; sp = 10 + 10 * 2; age = 50; tires = 4; sth = 999; Car(sp, age, tires, sth, car); out<<car.age; out<<car.tires; anotherCar = None; sp = 100; age = age + 20; sth = 1; Car(sp, age, tires, sth, anotherCar); out<<anotherCar.age;}" \
                "Movable { whatever = None; Movable(whateverNew){ whatever = whateverNew; }}" \
                "Vehicle extends Movable{ age = 20; tires = None; Vehicle(newAge, newTires, whatever):Movable(whatever){ age = newAge; tires = newTires; }}" \
@@ -125,3 +125,19 @@ class InterpreterTest(unittest.TestCase):
         self.manage_source(code)
         self.program.interpret()
         self.assertEqual("50\n4\n70\n", self.output.getvalue())
+
+    def test_operator_overloaded(self):
+        code = "main(){ truck = None; anotherTruck = None; sp1 = 50; sp2 = 100; Truck(sp1, truck);" \
+               "Truck(sp2, anotherTruck); newTruck = truck + anotherTruck; out<<newTruck.speed;}" \
+               "Truck{ speed = 50; Truck(newSpeed, truck out){ speed = newSpeed; } operator + (lhs, rhs, newTruck out)" \
+               "{ newSpeed = lhs.speed + rhs.speed; Truck(newSpeed, newTruck); }}\0"
+        self.manage_source(code)
+        self.program.interpret()
+        self.assertEqual("150\n", self.output.getvalue())
+
+    def test_trying_to_use_operator_not_overloaded(self):
+        code = "main(){ truck = None; anotherTruck = None; sp1 = 50; sp2 = 100; Truck(sp1, truck);" \
+               "Truck(sp2, anotherTruck); newTruck = truck + anotherTruck; out<<newTruck.speed;}" \
+               "Truck{ speed = 50; Truck(newSpeed, truck out){ speed = newSpeed; }}\0"
+        self.manage_source(code)
+        with self.assertRaises(TypeError): self.program.interpret()

@@ -80,13 +80,19 @@ class DerivedClass(Base):
         self.shared_element.notify(self)
 
 
-def testowa():
-    constructor_method_args = ['speed']
-    list_of_arguments = ['a', 'speed', 'b']
+class Car:
+    def __init__(self, speed):
+        self.speed = speed
 
-    linked_args = {arg: value for arg in
-                   constructor_method_args for value in list_of_arguments if arg == value}
-    print(linked_args)
+    def __add__(self, other):
+        return self.speed + other.speed
+
+
+def testowa():
+    car = Car(50)
+    anotherCar = Car(100)
+    thirdCar = Car(200)
+    print(car + anotherCar + thirdCar)
 
 
 if __name__ == "__main__":

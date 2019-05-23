@@ -1,5 +1,28 @@
 main(){
 
+    truck = None;
+    anotherTruck = None;
+    sp1 = 50;
+    sp2 = 100;
+    Truck(sp1, truck);
+    Truck(sp2, anotherTruck);
+    newTruck = truck + anotherTruck;
+    out<<newTruck.speed;
+
+}
+
+
+Truck{
+
+    speed = 50;
+    Truck(newSpeed, truck out){
+        speed = newSpeed;
+    }
+
+}
+
+
+main2(){
     testCar = None;
     testSpeed = 80;
     Car(testSpeed, testCar);
@@ -9,16 +32,18 @@ main(){
     tires = 4;
     sth = 999;
     Car(sp, age, tires, sth, car);
-    out<<car.age;
-    out<<car.tires;
+    out<<car.speed;
     anotherCar = None;
     sp = 100;
     age = age + 20;
     sth = 1;
     Car(sp, age, tires, sth, anotherCar);
-    out<<anotherCar.age;
+    out<<anotherCar.speed;
+    superCar = car + anotherCar;
+    out<<superCar.speed;
 
 }
+
 
 
 Movable {
@@ -50,15 +75,17 @@ Car extends Vehicle{
     Car(newSpeed, age, newTires, whatever, car out):Vehicle(age, newTires, whatever){
         speed = newSpeed;
     }
-}
 
-
-
-Truck{
-    Truck(a, b, c):Vehicle(c){
-
+    operator + (lhs, rhs, result out){
+        totalSpeed = lhs.speed + rhs.speed;
+        Car(totalSpeed, result);
     }
+
 }
+
+
+
+
 
 
 randSpeed(speed in, shuffledSpeed out){
