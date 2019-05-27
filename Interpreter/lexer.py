@@ -64,6 +64,7 @@ class Lexer:
         if symbol == tokens.TokenType.t_comment.value:
             self.escape_comment()
             return True
+        return False
 
     @staticmethod
     def is_white_character(symbol):
@@ -200,52 +201,8 @@ class Lexer:
         self.source.next_symbol()
         return tokens.TokenType.t_division
 
-    def when_keyword_token(self):
+    def difference_token(self):
         self.source.next_symbol()
-        return tokens.TokenType.t_when
-
-    def else_keyword_token(self):
-        self.source.next_symbol()
-        return tokens.TokenType.t_else
-
-    def loop_keyword_token(self):
-        self.source.next_symbol()
-        return tokens.TokenType.t_loop
-
-    def operator_keyword_token(self):
-        self.source.next_symbol()
-        return tokens.TokenType.t_operator
-
-    def in_keyword_token(self):
-        self.source.next_symbol()
-        return tokens.TokenType.t_in
-
-    def out_keyword_token(self):
-        self.source.next_symbol()
-        return tokens.TokenType.t_out
-
-    def extends_keyword_token(self):
-        self.source.next_symbol()
-        return tokens.TokenType.t_extends
-
-    def none_keyword_token(self):
-        self.source.next_symbol()
-        return tokens.TokenType.t_none
-
-    def get_keyword_token(self):
-        self.source.next_symbol()
-        return tokens.TokenType.t_get
-
-    def set_keyword_token(self):
-        self.source.next_symbol()
-        return tokens.TokenType.t_set
-
-    def this_keyword_token(self):
-        self.source.next_symbol()
-        return tokens.TokenType.t_this
-
-    def check_if_number_or_difference_token(self):
-        symbol = self.source.next_symbol()
         return tokens.TokenType.t_difference
 
     def character_constant_token(self):
@@ -289,7 +246,7 @@ class Lexer:
         d['>'] = self.check_if_logical_or_input
         d['+'] = self.addition_token
         d['*'] = self.multiplication_token
-        d['-'] = self.check_if_number_or_difference_token
+        d['-'] = self.difference_token
         d['/'] = self.division_token
         d['\''] = self.character_constant_token
         d['['] = self.index_token

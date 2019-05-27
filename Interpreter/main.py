@@ -88,11 +88,19 @@ class Car:
         return self.speed + other.speed
 
 
+def t(a, b, c):
+    pass
+
+
 def testowa():
-    car = Car(50)
-    anotherCar = Car(100)
-    thirdCar = Car(200)
-    print(car + anotherCar + thirdCar)
+    # a = Car(20)
+    # b = Car(30)
+    # c = a - b
+    c = 2
+    if c:
+        print("siema")
+    # op = "+"
+    # print(eval(f"{a} {op} {b}"))
 
 
 if __name__ == "__main__":

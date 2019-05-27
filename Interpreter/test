@@ -1,22 +1,96 @@
 main(){
-
+    a = -(5 - 3 + 2 * 2 / 4 * (5 + 3 - 2));
+    out<<a;
     truck = None;
     anotherTruck = None;
-    sp1 = 50;
+    base = 2;
+    exponent = 6;
+    sp1 = None;
+    power(base, exponent, sp1);
     sp2 = 100;
     Truck(sp1, truck);
     Truck(sp2, anotherTruck);
     newTruck = truck + anotherTruck;
+    newSpeed = None;
+    newTruck.getSpeed(newSpeed);
+    out<<newSpeed;
     out<<newTruck.speed;
+    sum = 0;
+    base = -2;
+    loop( i = 0; i <= 5; i = i + 1){
+        x = None;
+        power(base, i, x);
+        sum = sum + x;
+    }
+    out<<sum;
+    when( truck < anotherTruck ){
+        out<<'Wolniejszy';
+    } else {
+        out<<'Szybszy';
+    }
+    newTruck.setSpeed(sum);
 
 }
 
+t(a, b, c){
+
+}
 
 Truck{
 
     speed = 50;
-    Truck(newSpeed, truck out){
-        speed = newSpeed;
+    Truck(speed, truck out){
+        when(newSpeed > 50){
+            when(newSpeed < 100){
+                speed = newSpeed;
+            } else{
+                speed = newSpeed;
+            }
+        } else{
+            speed = newSpeed;
+        }
+    }
+
+    setSpeed(speed in){
+        speed = speed;
+    }
+
+    getSpeed(sp out){
+        sp = speed;
+    }
+
+    operator + (lhs, rhs, newTruckkkk out){
+        speed = lhs.speed + rhs.speed;
+        Truck(speed, newTruckkkk);
+    }
+
+    operator < (lhs, rhs, result out){
+        when(lhs.speed <= rhs.speed){
+            result = 1;
+        } else {
+            result = 0;
+        }
+    }
+}
+
+power(x, y, z out){
+
+
+    #x = 2;
+    #y = 6;
+    #z = 0;
+
+    #power(x, y, z);
+    #out<< z;
+    #########powyzej jak wywolac
+
+    when( y == 0 ){
+        z = 1;
+    } else {
+        c = y - 1;
+        d = None;
+        power(x, c, d);
+        z = x * d;
     }
 
 }
@@ -140,27 +214,7 @@ sum(b in, c out){
 
 }
 
-power(x, y, z out){
 
-
-    x = 2;
-    y = 6;
-    z = 0;
-
-    power(x, y, z);
-    out<< z;
-    #########powyzej jak wywolac
-
-    when( y == 1 ){
-        z = x;
-    } else {
-        c = y - 1;
-        d = None;
-        power(x, c, d);
-        z = x * d;
-    }
-
-}
 
 
 

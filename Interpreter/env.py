@@ -1,4 +1,5 @@
-from copy import copy, deepcopy
+from copy import deepcopy
+from enum import Enum
 
 
 class Environment:
@@ -13,7 +14,7 @@ class Environment:
 
 
 class Object:
-    def __init__(self, attributes, methods, overridden_ops, base_obj):
+    def __init__(self, attributes, methods, overridden_ops, base_obj: 'Identifier'):
         """
            attributes - key : name, value : Attribute
            methods - key : (name, amount_of_args), value : Function
@@ -57,7 +58,6 @@ class Method:
 
     def execute(self, context, is_constructor=False):
         if is_constructor:
-            # create virt table
             if context.virtual_table is None:
                 object = context.objects[self.identifier.name]
                 context.virtual_table = VirtualTable(self.identifier.name, object, context.objects)
@@ -72,14 +72,12 @@ class Method:
                     constructor_method_args = constructor_method.list_of_arguments
                     linked_args = {arg.identifier.name: value.identifier for arg, value in
                                    zip(constructor_method_args, self.arguments_passed_to_base_object)}
+                    permission_args = create_permission_dict_for_args(constructor_method_args)
                     new_context = Context(previous_context=context, virtual_table=context.virtual_table,
                                           look_previous_context=False, look_virtual_table=True, level=context.level + 1)
                     new_context.args = linked_args
-                    # stwórz context nie mogacy patrzec wstecz
-                    # daj virt_table do modyfikacji
+                    new_context.args_permission = permission_args
                     constructor_method.execute(new_context, is_constructor=True)
-
-            # wykonaj block
             self.block.execute(context)
             # przypisz virt do zmiennej wyjsciowej
             for argument in self.list_of_arguments:
@@ -87,8 +85,6 @@ class Method:
                     context.set_value(argument.identifier, context.virtual_table)
                     break
             return
-        # wykonanie czegokolwiek na obiekcie wymaga aktualizacji virtual_table
-        # new_context = Context(context, virtual_table=virtual_table, level=context.level + 1)
         self.block.execute(context)
 
     def __repr__(self):
@@ -139,7 +135,7 @@ class OverriddenOperator:
         self.block = block
 
     def execute(self, context):
-        # wywołaj blok i potem zwróć wartość trzymaną w result
+        # operator + (lhs, rhs, result out){}
         self.block.execute(context)
         return context.get_value(self.list_of_arguments[2].identifier)
 
@@ -219,6 +215,12 @@ class Block:
             instruction.execute(context)
 
 
+def check_attributes_match(method_args: list, attributes: dict):
+    for argument in method_args:
+        if argument.identifier.name in attributes:
+            raise NameError(f"'{argument.identifier.name}' -> Methods should have argument names different than attribute names!")
+
+
 class MethodCall:
     def __init__(self, l_ident, r_ident, args):
         self.l_identifier = l_ident
@@ -228,45 +230,57 @@ class MethodCall:
     def execute(self, context):
         virtual_table = context.get_value(self.l_identifier)
         object = context.objects[virtual_table.object_type]
-        method = object.methods[(self.r_identifier.name, len(self.arguments))]
+        try:
+            method = object.methods[(self.r_identifier.name, len(self.arguments))]
+        except KeyError:
+            raise TypeError(
+                f"{self.r_identifier.name}() missing function with {len(self.arguments)} arguments") from None
         method_args = method.list_of_arguments
+        check_attributes_match(method_args, object.attributes)
         linked_args = {arg.identifier.name: value.identifier for arg, value in zip(method_args, self.arguments)}
+        permission_args = create_permission_dict_for_args(method_args)
         new_context = Context(context, virtual_table=virtual_table, look_virtual_table=True, level=context.level + 1)
         new_context.args = linked_args
+        new_context.args_permission = permission_args
         method.execute(new_context)
 
 
-# function = context.functions[self.identifier.name]
-#             fun_args = function.list_of_arguments
-#             linked_args = {arg.identifier.name: value.identifier for arg, value in zip(fun_args, self.arguments)}
-#             new_context = Context(context, level=context.level + 1)
-#             # print(f"Poziom: {new_context.level}")
-#             new_context.args = linked_args
 class FunctionCall:
     def __init__(self, identifier, args):
         self.identifier = identifier
         self.arguments = args
         self.amount_of_args = len(self.arguments)
-        # self.extending_object = extending_obj
 
     def execute(self, context):
         # może to być konstruktor
         if context.objects.get(self.identifier.name, None) is not None:
-            constructor = context.objects[self.identifier.name].methods[(self.identifier.name, self.amount_of_args)]
+            try:
+                constructor = context.objects[self.identifier.name].methods[(self.identifier.name, self.amount_of_args)]
+            except KeyError:
+                raise TypeError(
+                    f"{self.identifier.name}() missing function with {self.amount_of_args} arguments") from None
             con_args = constructor.list_of_arguments
+            check_attributes_match(con_args, context.objects[self.identifier.name].attributes)
             linked_args = {arg.identifier.name: value.identifier for arg, value in zip(con_args, self.arguments)}
+            permission_args = create_permission_dict_for_args(con_args)
             new_context = Context(context, level=context.level + 1)
             new_context.args = linked_args
+            new_context.args_permission = permission_args
             context.objects[self.identifier.name].methods[(self.identifier.name, self.amount_of_args)].execute(
                 new_context,
                 is_constructor=True)
         else:
-            function = context.functions[(self.identifier.name, self.amount_of_args)]
+            try:
+                function = context.functions[(self.identifier.name, self.amount_of_args)]
+            except KeyError:
+                raise TypeError(
+                    f"{self.identifier.name}() missing function with {self.amount_of_args} arguments") from None
             fun_args = function.list_of_arguments
             linked_args = {arg.identifier.name: value.identifier for arg, value in zip(fun_args, self.arguments)}
+            permission_args = create_permission_dict_for_args(fun_args)
             new_context = Context(context, virtual_table=None, look_virtual_table=False, level=context.level + 1)
-            # print(f"Poziom: {new_context.level}")
             new_context.args = linked_args
+            new_context.args_permission = permission_args
             function.execute(new_context)
 
 
@@ -312,7 +326,6 @@ class Output:
 
 
 class Step:
-    # function call?
     def __init__(self, identifier, arithmetic_expr):
         self.identifier = identifier
         self.arithmetic_expression = arithmetic_expr
@@ -344,36 +357,11 @@ class ConditionComponent:
     def execute(self, context):
         result = self.l_factor.execute(context)
         for operator, component in self.r_factors:
-            if operator == "<=":
-                if result <= component.execute(context):
-                    result = 1
-                else:
-                    result = 0
-            elif operator == "<":
-                if result < component.execute(context):
-                    result = 1
-                else:
-                    result = 0
-            elif operator == ">":
-                if result > component.execute(context):
-                    result = 1
-                else:
-                    result = 0
-            elif operator == ">=":
-                if result >= component.execute(context):
-                    result = 1
-                else:
-                    result = 0
-            elif operator == "!=":
-                if result != component.execute(context):
-                    result = 1
-                else:
-                    result = 0
-            elif operator == '==':
-                if result == component.execute(context):
-                    result = 1
-                else:
-                    result = 0
+            result = execute_operator(result, operator, component, context)
+            if result:
+                result = 1
+            else:
+                result = 0
         return result
 
 
@@ -408,21 +396,7 @@ class ArithmeticExpression:
     def execute(self, context):
         result = self.l_component.execute(context)
         for operator, component in self.r_components_with_op:
-            if operator == "+":
-                if find_type(result) == 'VirtualTable':
-                    if object_has_operator_overloaded(result, operator, context.objects):
-                        overridden_operator_method = context.objects[result.object_type].overridden_operators['+']
-                        method_args = overridden_operator_method.list_of_arguments
-                        linked_args = {method_args[0].identifier.name: result, method_args[1].identifier.name: component.execute(context)}
-                        new_context = Context(context, look_virtual_table=False, level=context.level + 1)
-                        new_context.args = linked_args
-                        result = overridden_operator_method.execute(new_context)
-                    else:
-                        raise TypeError(f"{result.object_type} does not have operator '+' overloaded")
-                else:
-                    result = result + component.execute(context)
-            elif operator == "-":
-                result = result - component.execute(context)
+            result = execute_operator(result, operator, component, context)
         return result
 
 
@@ -434,10 +408,7 @@ class Component:
     def execute(self, context):
         result = self.l_element.execute(context)
         for operator, element in self.r_elements_with_op:
-            if operator == "*":
-                result = result * element.execute(context)
-            elif operator == "/":
-                result = result / element.execute(context)
+            result = execute_operator(result, operator, element, context)
         return result
 
 
@@ -511,7 +482,7 @@ class VirtualTable:
         while base_object_id is not None:
             base_object = env_objects.get(base_object_id.name, None)
             if base_object is None:
-                raise Exception("Missing object in environment")
+                raise NameError(f"{base_object_id.name} is not defined!")
             else:
                 for key, value in base_object.attributes.items():
                     if key not in attributes:
@@ -526,34 +497,9 @@ class VirtualTable:
         return attributes, methods, overridden_operators
 
 
-# class ObjectContext:
-#     def __init__(self, virtual_table: VirtualTable, level=1):
-#         self.level = level
-#         self.virtual_table = virtual_table
-#         self.local_variables = {}
-#         self.args = {}
-#
-#     def set_value(self, identifier: Identifier, value):
-#         try:
-#             self.virtual_table.set_attribute_value(identifier.name, value)
-#         except KeyError:
-#             if identifier.name in self.args:
-#                 related_identifier = self.args[identifier.name]
-#
-#             else:
-#                 self.local_variables[identifier.name] = value
-#
-#
-#     def get_value(self, identifier: Identifier):
-#         try:
-#             return self.virtual_table.get_attribute_value(identifier.name)
-#         except KeyError:
-#             if identifier.name in self.args:
-#                 return self.args[identifier.name]
-#             elif identifier.name in self.local_variables:
-#                 return self.local_variables[identifier.name]
-#             else:
-#                 raise Exception("Nie ma takeigo elementu")
+"""
+    look_previous_context -> functions and methods cant look to previous context, when and loop can        
+"""
 
 
 class Context:
@@ -563,6 +509,7 @@ class Context:
         self.previous_context = previous_context
         self.local_variables = {}  # key -> identifier value->value
         self.args = {}  # key -> identifier.name value->identifier
+        self.args_permission = {}
         self.can_look_previous_context = look_previous_context
         self.can_look_virtual_table = look_virtual_table
         if self.can_look_virtual_table and virtual_table is None and previous_context is not None:
@@ -578,15 +525,15 @@ class Context:
         else:
             self.objects = objects
 
-    """
-        look_previous -> functions and methods cant look to previous context, when and loop can        
-    """
-
     def set_value(self, identifier: Identifier, value):
         if identifier.name in self.args:
+            if self.args_permission[identifier.name] == Permission.READ_ONLY:
+                raise TypeError(f"Trying to set value to read-only argument '{identifier.name}'")
             related_identifier = self.args[identifier.name]
             if find_type(related_identifier) == 'Identifier':
                 self.previous_context.set_value(related_identifier, value)
+            elif find_type(related_identifier) == 'str':
+                self.args[identifier.name] = value
             else:
                 raise Exception("Something unexpected")
         elif self.virtual_table is not None and identifier.name in self.virtual_table.attributes:
@@ -609,10 +556,14 @@ class Context:
     def set_if_exists(context, identifier: Identifier, value):
         while context is not None:
             if identifier.name in context.args:
+                if context.args_permission[identifier.name] == Permission.READ_ONLY:
+                    raise TypeError(f"Trying to set value to read-only argument '{identifier.name}'")
                 related_identifier = context.args[identifier.name]
                 if find_type(related_identifier) == 'Identifier':
                     context.previous_context.set_value(related_identifier, value)
                     return True
+                elif find_type(related_identifier) == 'str':
+                    context.args[identifier.name] = value
                 else:
                     raise Exception("Something unexpected")
             elif context.virtual_table is not None and identifier.name in context.virtual_table.attributes:
@@ -629,6 +580,8 @@ class Context:
 
     def get_value(self, identifier: Identifier):
         if identifier.name in self.args:
+            if self.args_permission[identifier.name] == Permission.WRITE_ONLY:
+                raise TypeError(f"Trying to get value from write-only argument '{identifier.name}'")
             value = self.args[identifier.name]
             if find_type(value) == 'Identifier':
                 return self.previous_context.get_value(value)
@@ -638,9 +591,10 @@ class Context:
             return self.virtual_table.get_attribute_value(identifier.name)
         elif identifier.name in self.local_variables:
             return self.local_variables[identifier.name]
-        else:
+        elif self.previous_context is not None:
             value = self.previous_context.get_value(identifier)
             return value
+        raise NameError(f"{identifier.name} is not defined!")
 
 
 def find_type(value):
@@ -650,13 +604,12 @@ def find_type(value):
 def object_has_operator_overloaded(object_instance: VirtualTable, operator, objects: dict):
     object = objects.get(object_instance.object_type, None)
     if object is not None:
-        # obiekt istnieje
         for overridden_operator in object.overridden_operators:
             if overridden_operator == operator:
                 return True
-        return False
+        raise TypeError(f"{object_instance.object_type} does not have operator {operator} overloaded!")
     else:
-        raise Exception('Missing object!')
+        raise NameError(f'{object_instance.object_type} is not defined!')
 
 
 def move_extending_functions_to_objects(environment):
@@ -680,3 +633,57 @@ def move_extending_functions_to_objects(environment):
         del environment.functions[identifier]
 
     return fails
+
+
+def check_extending_objects(environment):
+    fails = []
+    for identifier, obj in environment.objects.items():
+        if obj.base_object is not None and obj.base_object.name not in environment.objects.keys():
+            fails.append(f"Fail in object {identifier} -> trying to extend non-existing object: "
+                         f"{obj.base_object.name}")
+    return fails
+
+
+def execute_operator(result, operator, component, context):
+    if find_type(result) == 'VirtualTable':
+        return execute_overloaded_operator(result, operator, component, context)
+    else:
+        return int(eval(f"{result}{operator}{component.execute(context)}"))
+
+
+def execute_overloaded_operator(result, operator: str, component: Component, context: Context):
+    if object_has_operator_overloaded(result, operator, context.objects):
+        overridden_operator_method = context.objects[result.object_type].overridden_operators[operator]
+        method_args = overridden_operator_method.list_of_arguments
+        linked_args = {method_args[0].identifier.name: result,
+                       method_args[1].identifier.name: component.execute(context),
+                       method_args[2].identifier.name: 'out'}
+        permission_args = {
+            method_args[0].identifier.name: Permission.READ_ONLY,
+            method_args[1].identifier.name: Permission.READ_ONLY,
+            method_args[2].identifier.name: Permission.READ_AND_WRITE
+        }
+        new_context = Context(context, look_virtual_table=False, level=context.level + 1)
+        new_context.args = linked_args
+        new_context.args_permission = permission_args
+        return overridden_operator_method.execute(new_context)
+    else:
+        raise TypeError(f"{result.object_type} does not have operator {operator} overloaded")
+
+
+def create_permission_dict_for_args(arguments: list):
+    permission_dict = {}
+    for arg in arguments:
+        if arg.has_in_keyword and arg.has_out_keyword:
+            permission_dict[arg.identifier.name] = Permission.READ_AND_WRITE
+        elif arg.has_in_keyword:
+            permission_dict[arg.identifier.name] = Permission.READ_ONLY
+        else:
+            permission_dict[arg.identifier.name] = Permission.WRITE_ONLY
+    return permission_dict
+
+
+class Permission(Enum):
+    READ_ONLY = 1
+    WRITE_ONLY = 2
+    READ_AND_WRITE = 3

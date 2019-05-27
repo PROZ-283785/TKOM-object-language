@@ -434,7 +434,7 @@ class Parser:
         return False
 
     def try_parse_element(self):
-        # int | identyfikator | wywołanie_funkcji_metody | odwołanie_do_atrybutu |
+        # int | identyfikator | odwołanie_do_atrybutu |
         # lewy_nawias, wyrażenie_arytmetyczne, prawy_nawias | operator_odejmowania, wyrażenie_arytmetyczne
         if self.try_parse_token(tokens.TokenType.t_left_parenthesis):
             if not self.try_parse_arithmetic_expression():
