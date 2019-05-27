@@ -23,13 +23,13 @@ class Parser:
     def parse(self):
         self.consume_token()
         while self.try_parse_identifier():
-            # try:
-            identifier = self.class_stack.pop()
-            if not (self.try_parse_function(identifier) or self.try_parse_object(identifier)):
-                raise Exception("Powinna być funkcja albo obiekt")
-            # except Exception as e:
-            #     print(e.args)
-            #     break
+            try:
+                identifier = self.class_stack.pop()
+                if not (self.try_parse_function(identifier) or self.try_parse_object(identifier)):
+                    raise Exception("Powinna być funkcja albo obiekt")
+            except Exception as e:
+                print(e.args)
+                break
         if len(self.error_message_buffer) == 0:
             return True
         else:
@@ -101,19 +101,23 @@ class Parser:
 
         return list_of_args
 
-    def try_parse_argument(self):
+    def try_parse_argument(self, can_have_in=True, can_have_out=True):
         # identyfikator, [ słowo_kluczowe_in ], [ słowo_kluczowe_out ]
         if not self.try_parse_identifier():
             return False
         identifier = self.class_stack.pop()
         has_in = False
-        if self.try_parse_keyword('in'):
+        if can_have_in and self.try_parse_keyword('in'):
             has_in = True
         has_out = False
-        if self.try_parse_keyword('out'):
+        if can_have_out and self.try_parse_keyword('out'):
             has_out = True
-        if not has_out:
+        if not has_out and can_have_in:
             has_in = True
+        elif not has_out and not can_have_in:
+            self.error_message_buffer.append(
+                self.error_handler.get_error(self.previous_token, "invalid syntax"))
+            raise Exception("Blednie podana lista argumentow")
         self.class_stack.append(env.Argument(identifier, has_in, has_out))
         return True
 
@@ -194,7 +198,21 @@ class Parser:
         operator = self.parse_operator()
         self.execute(self.try_parse_token, tokens.TokenType.t_left_parenthesis,
                      error_message=error_messages.left_parenthesis_message)
-        list_of_args = self.parse_list_of_arguments()
+        list_of_args = []
+        if not self.try_parse_argument(can_have_out=False):
+            self.error_message_buffer.append(self.error_handler.get_error(self.previous_token, 'Missing argument'))
+            raise RuntimeError('Missing argument')
+        list_of_args.append(self.class_stack.pop())
+        self.execute(self.try_parse_token, tokens.TokenType.t_comma, error_message="Missing comma")
+        if not self.try_parse_argument(can_have_out=False):
+            self.error_message_buffer.append(self.error_handler.get_error(self.previous_token, 'Missing argument'))
+            raise RuntimeError('Missing argument')
+        list_of_args.append(self.class_stack.pop())
+        self.execute(self.try_parse_token, tokens.TokenType.t_comma, error_message="Missing comma")
+        if not self.try_parse_argument(can_have_in=False):
+            self.error_message_buffer.append(self.error_handler.get_error(self.previous_token, 'Missing argument'))
+            raise RuntimeError('Missing argument')
+        list_of_args.append(self.class_stack.pop())
         self.execute(self.try_parse_token, tokens.TokenType.t_right_parenthesis,
                      error_message=error_messages.right_parenthesis_message)
         block = self.parse_block()

@@ -39,7 +39,7 @@ t(a, b, c){
 Truck{
 
     speed = 50;
-    Truck(speed, truck out){
+    Truck(newSpeed, truck out){
         when(newSpeed > 50){
             when(newSpeed < 100){
                 speed = newSpeed;
@@ -51,8 +51,8 @@ Truck{
         }
     }
 
-    setSpeed(speed in){
-        speed = speed;
+    setSpeed(newSpeed in){
+        speed = newSpeed;
     }
 
     getSpeed(sp out){
@@ -217,7 +217,6 @@ sum(b in, c out){
 
 
 
-
 fun(a in){
     out<<a;
     b = 9;
@@ -347,9 +346,6 @@ dodaj(a in, b in, c out){
 }
 obiekt1{
     a = 5;
-    operator = (){
-
-    }
 
     fun(a in, b out){
 
