@@ -100,7 +100,6 @@ class Attribute:
         self.has_getter = has_getter
         self.has_setter = has_setter
         self.value = value.execute(None)
-        # self.type = find_type(value)
 
     def execute(self, context):
         return self.value

@@ -28,7 +28,7 @@ class Parser:
                 if not (self.try_parse_function(identifier) or self.try_parse_object(identifier)):
                     raise Exception("Powinna być funkcja albo obiekt")
             except Exception as e:
-                print(e.args)
+                # print(e.args)
                 break
         if len(self.error_message_buffer) == 0:
             return True

@@ -17,10 +17,10 @@ class Interpreter:
                         print(fail)
                     return
                 main_context = env.Context(functions=self.environment.functions, objects=self.environment.objects)
-                # try:
-                self.environment.functions[starting_fun].execute(main_context)
-                # except Exception as e:
-                #     print(f"{e.__class__.__name__}: {e}")
+                try:
+                    self.environment.functions[starting_fun].execute(main_context)
+                except Exception as e:
+                    print(f"{e.__class__.__name__}: {e}")
                 # print()
             else:
                 print("Missing main function!")

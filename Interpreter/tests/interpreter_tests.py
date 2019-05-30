@@ -140,4 +140,5 @@ class InterpreterTest(unittest.TestCase):
                "Truck(sp2, anotherTruck); newTruck = truck + anotherTruck; out<<newTruck.speed;}" \
                "Truck{ speed = 50; Truck(newSpeed, truck out){ speed = newSpeed; }}\0"
         self.manage_source(code)
-        with self.assertRaises(TypeError): self.program.interpret()
+        self.program.interpret()
+        self.assertEqual("TypeError: Truck does not have operator + overloaded!\n", self.output.getvalue())
