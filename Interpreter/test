@@ -73,27 +73,7 @@ Truck{
     }
 }
 
-power(x, y, z out){
 
-
-    #x = 2;
-    #y = 6;
-    #z = 0;
-
-    #power(x, y, z);
-    #out<< z;
-    #########powyzej jak wywolac
-
-    when( y == 0 ){
-        z = 1;
-    } else {
-        c = y - 1;
-        d = None;
-        power(x, c, d);
-        z = x * d;
-    }
-
-}
 
 
 main2(){
@@ -194,25 +174,6 @@ f1(a, y out){
 }
 
 
-
-sum(b in, c out){
-
-    c = 0;
-    d = 5;
-    out<< d;
-    sum(d, c);
-    out<< c;
-    ########
-    when( b >= 1 ){
-        a = b - 1;
-        d = 0;
-        sum(a, d);
-        c = d + b;
-    } else {
-        c = 0;
-    }
-
-}
 
 
 

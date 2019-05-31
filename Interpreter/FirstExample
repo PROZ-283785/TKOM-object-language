@@ -1,0 +1,89 @@
+main(){
+
+    speed = 100;
+    age = 20;
+    color = 'green';
+    firstCar = None;
+    Car(color, age, speed, firstCar);
+    out<<firstCar.speed;
+    out<<firstCar.age;
+    out<<firstCar.color;
+    speed = 200;
+    age = 30;
+    color = 'yellow';
+    secondCar = None;
+    Car(color, age, speed, secondCar);
+    newCar = firstCar + secondCar;
+    out<<newCar.speed;
+    out<<newCar.age;
+    out<<newCar.color;
+    anotherCar = firstCar - 50;
+    out<<anotherCar.speed;
+    out<<anotherCar.age;
+    out<<anotherCar.color;
+
+    simpleCar = None;
+    Car(color, simpleCar);
+    out<<simpleCar.speed;
+    out<<simpleCar.age;
+    simpleCarColor = None;
+    simpleCar.getColor(simpleCarColor);
+    out<<simpleCarColor;
+
+    acceleration = 3;
+    simpleCar.boost(acceleration);
+    out<<simpleCar.speed;
+}
+
+
+Vehicle{
+    speed = None;
+    age = None;
+
+    #Vehicle(){
+     #   speed = 20;
+    #}
+
+    Vehicle(newAge, newSpeed){
+        speed = newSpeed;
+        age = newAge;
+    }
+}
+
+
+Car extends Vehicle{
+
+    color = 'pink';
+
+    Car(newColor, newAge, newSpeed, car out):Vehicle(newAge, newSpeed){
+        color = newColor;
+    }
+
+    Car(newColor, car out):Vehicle(){
+        color = newColor;
+    }
+
+    operator + (lhs, rhs, newCar out){
+        newSpeed = lhs.speed + rhs.speed;
+        newAge = lhs.age + rhs.age;
+        newColor = 'red';
+        Car(newColor, newAge, newSpeed, newCar);
+    }
+
+
+    operator - (lhs, rhs, newCar out){
+        newSpeed = lhs.speed - rhs;
+        color = lhs.color;
+        age = lhs.age;
+        Car(color, age, newSpeed, newCar);
+    }
+
+}
+
+getColor(result out) extends Car{
+    result = color;
+}
+
+boost(acceleration in) extends Car{
+    speed = speed * acceleration;
+}

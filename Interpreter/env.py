@@ -67,8 +67,12 @@ class Method:
                     # obsluz klase nadrzedna wywolujac jej konstruktor
                     base_obj_name = self.base_object_constructor_call.name
                     # stwórz relacje miedzy argsami - powinno sprawdzić czy ilość się zgadza
-                    constructor_method = context.objects[base_obj_name].methods[
-                        (base_obj_name, len(self.arguments_passed_to_base_object))]
+                    try:
+                        constructor_method = context.objects[base_obj_name].methods[
+                            (base_obj_name, len(self.arguments_passed_to_base_object))]
+                    except KeyError:
+                        raise TypeError(
+                            f"{base_obj_name}() missing function with {len(self.arguments_passed_to_base_object)} arguments") from None
                     constructor_method_args = constructor_method.list_of_arguments
                     linked_args = {arg.identifier.name: value.identifier for arg, value in
                                    zip(constructor_method_args, self.arguments_passed_to_base_object)}
@@ -217,7 +221,8 @@ class Block:
 def check_attributes_match(method_args: list, attributes: dict):
     for argument in method_args:
         if argument.identifier.name in attributes:
-            raise NameError(f"'{argument.identifier.name}' -> Methods should have argument names different than attribute names!")
+            raise NameError(
+                f"'{argument.identifier.name}' -> Methods should have argument names different than attribute names!")
 
 
 class MethodCall:
