@@ -8,9 +8,11 @@ main(){
         }
     }
 
-    value = 50;
+    value = 37;
 
-    when( value > 40){
+    when( value > 40 || value > 35){
+
+        out<<'koniec';
         when(value < 70){
             when(value > 55){
                 value = value * value;

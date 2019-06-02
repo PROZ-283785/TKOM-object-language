@@ -7,7 +7,7 @@ import lexer
 
 def main():
     src = source.StreamSource()
-    fo = open("FirstExample", "r", encoding='utf-8', newline='\n')
+    fo = open("ThirdExample", "r", encoding='utf-8', newline='\n')
     environment = env.Environment()
     src.set_data(fo)
     lex = lexer.Lexer(src)
