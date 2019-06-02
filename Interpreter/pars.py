@@ -28,7 +28,7 @@ class Parser:
                 if not (self.try_parse_function(identifier) or self.try_parse_object(identifier)):
                     raise Exception("Powinna być funkcja albo obiekt")
             except Exception as e:
-                break
+                self.error_message_buffer.append(e)
         if len(self.error_message_buffer) == 0:
             return True
         else:
@@ -259,19 +259,21 @@ class Parser:
 
     def try_parse_assignment(self, identifier):
         # operator_przypisania, wyrażenie_arytmetyczne, średnik
+        line = self.current_token.line
         if self.try_parse_token(tokens.TokenType.t_assignment):
             if not(self.try_parse_arithmetic_expression() or self.try_parse_keyword('None') or self.try_parse_character_constant()):
                 self.error_message_buffer.append(
                     self.error_handler.get_error(self.previous_token, error_messages.invalid_syntax_message))
                 raise Exception("Missing expression or None value or character constant")
             value = self.class_stack.pop()
-            self.class_stack.append(env.Assignment(False, identifier, value))
+            self.class_stack.append(env.Assignment(False, identifier, value, line))
             return True
         return False
 
     def try_parse_assignment_with_this(self):
         # [słowo_kluczowe_this, kropka], identyfikator, operator_przypisania,
         # wyrażenie_arytmetyczne
+        line = self.current_token.line
         if self.try_parse_keyword('this'):
             self.execute(self.try_parse_token, tokens.TokenType.t_dot, error_message=error_messages.dot_message)
             self.execute(self.try_parse_identifier, error_message=error_messages.identifier_message)
@@ -280,7 +282,7 @@ class Parser:
                          error_message=error_messages.assignment_operator_message)
             self.execute(self.try_parse_arithmetic_expression, error_message=error_messages.invalid_syntax_message)
             arithmetic_expr = self.class_stack.pop()
-            self.class_stack.append(env.Assignment(True, identifier, arithmetic_expr))
+            self.class_stack.append(env.Assignment(True, identifier, arithmetic_expr, line))
             return True
         return False
 
@@ -290,16 +292,18 @@ class Parser:
 
     def try_parse_function_call(self, identifier):
         # lewy_nawias, [lista_argumentów], prawy_nawias, średnik
+        line = self.current_token.line
         if self.try_parse_token(tokens.TokenType.t_left_parenthesis):
             list_of_args = self.parse_list_of_arguments()
             self.execute(self.try_parse_token, tokens.TokenType.t_right_parenthesis,
                          error_message=error_messages.right_parenthesis_message)
-            self.class_stack.append(env.FunctionCall(identifier, list_of_args))
+            self.class_stack.append(env.FunctionCall(identifier, list_of_args, line))
             return True
         return False
 
     def try_parse_method_call(self, l_identifier):
         # kropka, identyfikator, lewy_nawias, [lista_argumentów], prawy_nawias, średnik
+        line = self.current_token.line
         if self.try_parse_token(tokens.TokenType.t_dot):
             self.execute(self.try_parse_identifier, error_message=error_messages.identifier_message)
             r_identifier = self.class_stack.pop()
@@ -308,7 +312,7 @@ class Parser:
             list_of_args = self.parse_list_of_arguments()
             self.execute(self.try_parse_token, tokens.TokenType.t_right_parenthesis,
                          error_message=error_messages.right_parenthesis_message)
-            self.class_stack.append(env.MethodCall(l_identifier, r_identifier, list_of_args))
+            self.class_stack.append(env.MethodCall(l_identifier, r_identifier, list_of_args, line))
             return True
         return False
 
@@ -483,16 +487,18 @@ class Parser:
 
     # can have identifier or this operator
     def try_parse_attribute_reference(self, l_identifier, has_this):
+        line = self.current_token.line
         if self.try_parse_token(tokens.TokenType.t_dot):
             self.execute(self.try_parse_identifier, error_message=error_messages.identifier_message)
             r_identifier = self.class_stack.pop()
-            self.class_stack.append(env.AttributeReference(l_identifier, r_identifier, has_this))
+            self.class_stack.append(env.AttributeReference(l_identifier, r_identifier, line, has_this))
             return True
         return False
 
     def try_parse_method_call_or_attribute_ref(self, l_identifier):
         # kropka, identyfikator - referencja
         # kropka, identyfikator, lewy_nawias, [ lista_argumentów ], prawy_nawias - wywołanie
+        line = self.current_token.line
         if self.try_parse_token(tokens.TokenType.t_dot):
             self.execute(self.try_parse_identifier, error_message=error_messages.identifier_message)
             r_identifier = self.class_stack.pop()
@@ -500,9 +506,9 @@ class Parser:
                 list_of_args = self.parse_list_of_arguments()
                 self.execute(self.try_parse_token, tokens.TokenType.t_right_parenthesis,
                              error_message=error_messages.right_parenthesis_message)
-                self.class_stack.append(env.MethodCall(l_identifier, r_identifier, list_of_args))
+                self.class_stack.append(env.MethodCall(l_identifier, r_identifier, list_of_args, line))
             else:
-                self.class_stack.append(env.AttributeReference(l_identifier, r_identifier))
+                self.class_stack.append(env.AttributeReference(l_identifier, r_identifier, line))
             return True
         return False
 

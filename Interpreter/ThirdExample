@@ -1,6 +1,11 @@
 main(){
+   asdf = None;
+   samochod = None;
+   sp = 50;
+   Car(sp, samochod);
 
-   a = None;
+   samochod.run();
+   a = samochod + 100;
    in >> a;
    out<<a;
    a = a + 5;
@@ -34,6 +39,18 @@ main(){
 
     when( a > 2 * - 3 || a < -1/2 && a > -5){
         out<<a;
+    }
+
+
+}
+
+
+Car{
+
+    speed = 100;
+
+    Car(newSpeed in, car out){
+        speed = newSpeed;
     }
 
 

@@ -151,13 +151,17 @@ class OverriddenOperator:
 
 
 class Assignment:
-    def __init__(self, has_this, identifier, value):
+    def __init__(self, has_this, identifier, value, line):
         self.has_this_keyword = has_this
         self.identifier = identifier
         self.arithmetic_expression = value
+        self.line = line
 
     def execute(self, context):
-        context.set_value(self.identifier, self.arithmetic_expression.execute(context))
+        try:
+            context.set_value(self.identifier, self.arithmetic_expression.execute(context))
+        except Exception as e:
+            raise Exception(f"{e.__class__.__name__} in line {self.line} -> {e}") from None
 
 
 class Loop:
@@ -227,10 +231,11 @@ def check_attributes_match(method_args: list, attributes: dict):
 
 
 class MethodCall:
-    def __init__(self, l_ident, r_ident, args):
+    def __init__(self, l_ident, r_ident, args, line):
         self.l_identifier = l_ident
         self.r_identifier = r_ident
         self.arguments = args
+        self.line = line
 
     def execute(self, context):
         virtual_table = context.get_value(self.l_identifier)
@@ -239,7 +244,7 @@ class MethodCall:
             method = object.methods[(self.r_identifier.name, len(self.arguments))]
         except KeyError:
             raise TypeError(
-                f"{self.r_identifier.name}() missing function with {len(self.arguments)} arguments") from None
+                f"Line {self.line} -> {self.r_identifier.name}() missing function with {len(self.arguments)} arguments") from None
         method_args = method.list_of_arguments
         check_attributes_match(method_args, object.attributes)
         linked_args = {arg.identifier.name: value.identifier for arg, value in zip(method_args, self.arguments)}
@@ -251,10 +256,11 @@ class MethodCall:
 
 
 class FunctionCall:
-    def __init__(self, identifier, args):
+    def __init__(self, identifier, args, line):
         self.identifier = identifier
         self.arguments = args
         self.amount_of_args = len(self.arguments)
+        self.line = line
 
     def execute(self, context):
         # może to być konstruktor
@@ -263,7 +269,7 @@ class FunctionCall:
                 constructor = context.objects[self.identifier.name].methods[(self.identifier.name, self.amount_of_args)]
             except KeyError:
                 raise TypeError(
-                    f"{self.identifier.name}() missing function with {self.amount_of_args} arguments") from None
+                    f"Line {self.line} -> {self.identifier.name}() missing function with {self.amount_of_args} arguments") from None
             con_args = constructor.list_of_arguments
             check_attributes_match(con_args, context.objects[self.identifier.name].attributes)
             linked_args = {arg.identifier.name: value.identifier for arg, value in zip(con_args, self.arguments)}
@@ -279,7 +285,7 @@ class FunctionCall:
                 function = context.functions[(self.identifier.name, self.amount_of_args)]
             except KeyError:
                 raise TypeError(
-                    f"{self.identifier.name}() missing function with {self.amount_of_args} arguments") from None
+                    f"Line {self.line} -> {self.identifier.name}() missing function with {self.amount_of_args} arguments") from None
             fun_args = function.list_of_arguments
             linked_args = {arg.identifier.name: value.identifier for arg, value in zip(fun_args, self.arguments)}
             permission_args = create_permission_dict_for_args(fun_args)
@@ -429,15 +435,16 @@ class Element:
 
 
 class AttributeReference:
-    def __init__(self, l_ident, r_ident, has_this=False):
+    def __init__(self, l_ident, r_ident, line, has_this=False):
         self.has_this_keyword = has_this
         self.l_identifier = l_ident
         self.r_identifier = r_ident
+        self.line = line
 
     def execute(self, context):
         virtual_table = context.get_value(self.l_identifier)
         if find_type(virtual_table) != 'VirtualTable':
-            raise Exception("Attribute reference not referencing to the object type value!")
+            raise Exception(f"Line {self.line} -> Attribute reference not referencing to the object type value!")
         return virtual_table.get_attribute_value(self.r_identifier.name)
 
 
