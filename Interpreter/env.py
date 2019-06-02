@@ -72,7 +72,8 @@ class Method:
                             (base_obj_name, len(self.arguments_passed_to_base_object))]
                     except KeyError:
                         raise TypeError(
-                            f"{base_obj_name}() missing function with {len(self.arguments_passed_to_base_object)} arguments") from None
+                            f"{base_obj_name}() missing function with "
+                            f"{len(self.arguments_passed_to_base_object)} arguments") from None
                     constructor_method_args = constructor_method.list_of_arguments
                     linked_args = {arg.identifier.name: value.identifier for arg, value in
                                    zip(constructor_method_args, self.arguments_passed_to_base_object)}
@@ -652,7 +653,13 @@ def execute_operator(result, operator, component, context):
     if find_type(result) == 'VirtualTable':
         return execute_overloaded_operator(result, operator, component, context)
     else:
-        return int(eval(f"{result}{operator}{component.execute(context)}"))
+        try:
+            rhs = component.execute(context)
+            result = int(eval(f"{result}{operator}{rhs}"))
+        except Exception as e:
+            raise Exception(
+                f"'{e.__class__.__name__}' while calculating {find_type(result)} {operator} {find_type(rhs)}") from None
+        return result
 
 
 def execute_overloaded_operator(result, operator: str, component: Component, context: Context):

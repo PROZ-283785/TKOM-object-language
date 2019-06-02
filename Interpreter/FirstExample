@@ -40,11 +40,11 @@ Vehicle{
     speed = None;
     age = None;
 
-    #Vehicle(){
-     #   speed = 20;
-    #}
+    Vehicle(){
+        speed = 20;
+    }
 
-    Vehicle(newAge, newSpeed){
+    Vehicle(newAge, newSpeed in ){
         speed = newSpeed;
         age = newAge;
     }

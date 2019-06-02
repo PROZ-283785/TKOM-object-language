@@ -21,7 +21,6 @@ class Interpreter:
                     self.environment.functions[starting_fun].execute(main_context)
                 except Exception as e:
                     print(f"{e.__class__.__name__}: {e}")
-                # print()
             else:
                 print("Missing main function!")
                 return
