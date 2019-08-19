@@ -443,7 +443,7 @@ class AttributeReference:
 
     def execute(self, context):
         virtual_table = context.get_value(self.l_identifier)
-        if find_type(virtual_table) != 'VirtualTable':
+        if not isinstance(virtual_table, VirtualTable):
             raise Exception(f"Line {self.line} -> Attribute reference not referencing to the object type value!")
         return virtual_table.get_attribute_value(self.r_identifier.name)
 
@@ -542,9 +542,9 @@ class Context:
             if self.args_permission[identifier.name] == Permission.READ_ONLY:
                 raise TypeError(f"Trying to set value to read-only argument '{identifier.name}'")
             related_identifier = self.args[identifier.name]
-            if find_type(related_identifier) == 'Identifier':
+            if isinstance(related_identifier, Identifier):
                 self.previous_context.set_value(related_identifier, value)
-            elif find_type(related_identifier) == 'str':
+            elif isinstance(related_identifier, str):
                 self.args[identifier.name] = value
             else:
                 raise Exception("Something unexpected")
@@ -571,10 +571,10 @@ class Context:
                 if context.args_permission[identifier.name] == Permission.READ_ONLY:
                     raise TypeError(f"Trying to set value to read-only argument '{identifier.name}'")
                 related_identifier = context.args[identifier.name]
-                if find_type(related_identifier) == 'Identifier':
+                if isinstance(related_identifier, Identifier):
                     context.previous_context.set_value(related_identifier, value)
                     return True
-                elif find_type(related_identifier) == 'str':
+                elif isinstance(related_identifier, str):
                     context.args[identifier.name] = value
                 else:
                     raise Exception("Something unexpected")
@@ -595,7 +595,7 @@ class Context:
             if self.args_permission[identifier.name] == Permission.WRITE_ONLY:
                 raise TypeError(f"Trying to get value from write-only argument '{identifier.name}'")
             value = self.args[identifier.name]
-            if find_type(value) == 'Identifier':
+            if isinstance(value, Identifier):
                 return self.previous_context.get_value(value)
             else:
                 return value
@@ -657,7 +657,7 @@ def check_extending_objects(environment):
 
 
 def execute_operator(result, operator, component, context):
-    if find_type(result) == 'VirtualTable':
+    if isinstance(result, VirtualTable):
         return execute_overloaded_operator(result, operator, component, context)
     else:
         try:

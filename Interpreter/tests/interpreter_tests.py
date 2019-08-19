@@ -141,4 +141,4 @@ class InterpreterTest(unittest.TestCase):
                "Truck{ speed = 50; Truck(newSpeed, truck out){ speed = newSpeed; }}\0"
         self.manage_source(code)
         self.program.interpret()
-        self.assertEqual("TypeError: Truck does not have operator + overloaded!\n", self.output.getvalue())
+        self.assertEqual("Exception: TypeError in line 1 -> Truck does not have operator + overloaded!\n", self.output.getvalue())

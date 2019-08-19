@@ -99,4 +99,3 @@ class ParserTest(unittest.TestCase):
         self.manage_source(code)
         self.parser.consume_token()
         self.assertEqual(True, self.parser.try_parse_operator_overloading())
-
